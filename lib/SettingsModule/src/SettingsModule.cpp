@@ -117,6 +117,18 @@ void SettingsModule::setTareOffset(long offset) {
     save();
 }
 
+void SettingsModule::setNtpServer(const char* ntp) {
+    strncpy(settings.ntpServer, ntp, sizeof(settings.ntpServer) - 1);
+    settings.ntpServer[sizeof(settings.ntpServer) - 1] = '\0';
+    save();
+}
+
+void SettingsModule::setServerUrl(const char* url) {
+    strncpy(settings.serverUrl, url, sizeof(settings.serverUrl) - 1);
+    settings.serverUrl[sizeof(settings.serverUrl) - 1] = '\0';
+    save();
+}
+
 void SettingsModule::handleSetServer(String args) {
     if (args.length() == 0) {
         Logger::warn("Usage: set_server <URL>");

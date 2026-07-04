@@ -2,6 +2,7 @@
 #include "Logger.h"
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
+#include <ArduinoJson.h>
 
 TelemetryModule::TelemetryModule(ScaleDriver& scaleDriver, TimeModule& timeMod)
     : settings(nullptr), scale(scaleDriver), timeModule(timeMod) {}
@@ -67,6 +68,27 @@ void TelemetryModule::begin(TerminalCLI& cli, SettingsModule& s) {
         if (httpCode > 0) {
             Logger::info("Telemetry payload sent successfully. HTTP Code: ");
             Logger::info(String(httpCode).c_str());
+
+            if (httpCode == 200) {
+                String response = http.getString();
+                JsonDocument doc;
+                DeserializationError error = deserializeJson(doc, response);
+
+                if (!error && doc["update_config"] == true) {
+                    Logger::info("Received new configuration from server!");
+                    
+                    if (!doc["config"]["telemetry"].isNull()) {
+                        bool enable = (doc["config"]["telemetry"] == "on");
+                        settings->setTelemetryEnabled(enable);
+                        Logger::info(enable ? "Telemetry updated: ON" : "Telemetry updated: OFF");
+                    }
+                    if (!doc["config"]["ntp_server"].isNull()) {
+                        const char* ntp = doc["config"]["ntp_server"];
+                        settings->setNtpServer(ntp);
+                        Logger::info("NTP Server updated.");
+                    }
+                }
+            }
         } else {
             Logger::error("Failed to send telemetry payload. Error: ");
             Logger::error(http.errorToString(httpCode).c_str());

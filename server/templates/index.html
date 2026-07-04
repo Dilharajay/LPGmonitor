@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Digital Scale Dashboard</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f4f4f9; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; }
+        h1, h2 { color: #333; }
+        .config-panel { background: #eef2f5; padding: 20px; border-radius: 6px; margin-bottom: 30px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input[type="text"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .badge-pending { background: #ffc107; color: #333; }
+        .badge-synced { background: #28a745; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Digital Scale Dashboard</h1>
+        
+        <div class="config-panel">
+            <h2>Device Configuration</h2>
+            <p>
+                Status: 
+                {% if config.update_pending %}
+                    <span class="badge badge-pending">Update Pending (Will apply on next wake)</span>
+                {% else %}
+                    <span class="badge badge-synced">Synced</span>
+                {% endif %}
+            </p>
+            <form action="/update_config" method="POST">
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="telemetry_enabled" {% if config.telemetry_enabled %}checked{% endif %}>
+                        Enable Telemetry (1-Hour Sleep Cycle)
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>NTP Server</label>
+                    <input type="text" name="ntp_server" value="{{ config.ntp_server }}" required>
+                </div>
+                <button type="submit">Save Configuration</button>
+            </form>
+        </div>
+
+        <h2>Recent Telemetry Data</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Device Timestamp</th>
+                    <th>Received At (Server)</th>
+                    <th>Weight (g)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>{{ record.id }}</td>
+                    <td>{{ record.timestamp }}</td>
+                    <td>{{ record.received_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td><strong>{{ "%.2f"|format(record.weight_g) }}</strong></td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4">No data received yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

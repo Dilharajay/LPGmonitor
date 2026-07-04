@@ -29,6 +29,8 @@ public:
     
     void setTelemetryEnabled(bool enabled);
     void setTareOffset(long offset);
+    void setNtpServer(const char* ntp);
+    void setServerUrl(const char* url);
 
 private:
     SystemSettings settings;
