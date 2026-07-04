@@ -9,11 +9,11 @@ class ScaleDriver {
 public:
     ScaleDriver();
     
-    // Initialize the HX711 and perform initial tare
-    void begin(uint8_t doutPin, uint8_t sckPin, float calFactor);
+    // Initialize the HX711 and perform initial tare (or restore offset)
+    void begin(uint8_t doutPin, uint8_t sckPin, float calFactor, long savedOffset = 0);
     
     // Commands
-    void performTare();
+    long performTare();
     void performCalibration(float knownWeight);
     
     // Read the next sample and run it through the filter pipeline

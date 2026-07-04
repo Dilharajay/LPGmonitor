@@ -13,6 +13,7 @@ public:
     TimeModule();
     void begin(TerminalCLI& cli, SettingsModule& settings);
     void update();
+    String getTimeString();
 
 private:
     RTC_DS1307 rtc;

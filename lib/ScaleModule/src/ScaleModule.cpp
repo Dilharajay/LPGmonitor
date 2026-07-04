@@ -2,9 +2,10 @@
 #include "Logger.h"
 
 ScaleModule::ScaleModule(ScaleDriver& driver) : 
-    scaleDriver(driver), isStreamingData(false) {}
+    scaleDriver(driver), settings(nullptr), isStreamingData(false) {}
 
-void ScaleModule::begin(TerminalCLI& cli) {
+void ScaleModule::begin(TerminalCLI& cli, SettingsModule& s) {
+    settings = &s;
     // Register commands with lambda bindings to this instance
     cli.registerCommand("t", "Tare the scale (zero it)", 
                         [this](String args) { this->handleTare(args); });
@@ -24,7 +25,11 @@ void ScaleModule::begin(TerminalCLI& cli) {
 
 void ScaleModule::handleTare(String args) {
     Logger::info("Taring... please wait.");
-    scaleDriver.performTare();
+    long newOffset = scaleDriver.performTare();
+    if (newOffset != 0 && settings) {
+        settings->setTareOffset(newOffset);
+        Logger::info("New tare offset saved to EEPROM.");
+    }
 }
 
 void ScaleModule::handleCalibrate(String args) {

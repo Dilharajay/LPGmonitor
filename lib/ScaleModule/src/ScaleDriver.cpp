@@ -15,7 +15,7 @@ ScaleDriver::ScaleDriver()
 }
 
 // ── Init ───────────────────────────────────────────────────────────
-void ScaleDriver::begin(uint8_t doutPin, uint8_t sckPin, float calFactor) {
+void ScaleDriver::begin(uint8_t doutPin, uint8_t sckPin, float calFactor, long savedOffset) {
     scale.begin(doutPin, sckPin);
     calibrationFactor = calFactor;
 
@@ -26,8 +26,13 @@ void ScaleDriver::begin(uint8_t doutPin, uint8_t sckPin, float calFactor) {
     Logger::debug("Checking HX711 connection...");
 
     if (scale.wait_ready_timeout(2000)) {
-        Logger::info("HX711 connected! Taring...");
-        performTare();
+        if (savedOffset == 0) {
+            Logger::info("HX711 connected! Taring...");
+            performTare();
+        } else {
+            Logger::info("HX711 connected! Restoring tare offset from EEPROM.");
+            scale.set_offset(savedOffset);
+        }
     } else {
         Logger::error("HX711 not found!");
         Logger::error("Check wiring! Ensure DT is on D2 and SCK is on D1.");
@@ -53,7 +58,7 @@ void ScaleDriver::resetFilters() {
 }
 
 // ── Tare ───────────────────────────────────────────────────────────
-void ScaleDriver::performTare() {
+long ScaleDriver::performTare() {
     long sum = 0;
     int valid = 0;
 
@@ -66,11 +71,14 @@ void ScaleDriver::performTare() {
     }
 
     if (valid > 0) {
-        scale.set_offset(sum / valid);
+        long newOffset = sum / valid;
+        scale.set_offset(newOffset);
         Logger::info("Tare complete!");
         resetFilters();
+        return newOffset;
     } else {
         Logger::error("Tare failed! HX711 timeout.");
+        return 0;
     }
 }
 

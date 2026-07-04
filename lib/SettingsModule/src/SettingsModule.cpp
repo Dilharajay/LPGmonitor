@@ -25,6 +25,10 @@ void SettingsModule::begin(TerminalCLI& cli) {
         [this](String args) { this->handleSetPassword(args); });
     cli.registerCommand("set_ntp", "Set NTP Server", 
         [this](String args) { this->handleSetNTP(args); });
+    cli.registerCommand("set_server", "Set Flask Server URL", 
+        [this](String args) { this->handleSetServer(args); });
+    cli.registerCommand("telemetry", "Enable/Disable Telemetry (on/off)", 
+        [this](String args) { this->handleTelemetry(args); });
     cli.registerCommand("settings", "View current settings", 
         [this](String args) { this->handlePrintSettings(args); });
 }
@@ -64,6 +68,12 @@ void SettingsModule::resetToDefaults() {
     strncpy(settings.ntpServer, "pool.ntp.org", sizeof(settings.ntpServer) - 1);
     settings.ntpServer[sizeof(settings.ntpServer) - 1] = '\0';
     
+    strncpy(settings.serverUrl, "http://192.168.1.100:5000/api/weight", sizeof(settings.serverUrl) - 1);
+    settings.serverUrl[sizeof(settings.serverUrl) - 1] = '\0';
+    
+    settings.telemetryEnabled = false;
+    settings.tareOffset = 0;
+    
     save();
 }
 
@@ -97,6 +107,38 @@ void SettingsModule::handleSetNTP(String args) {
     save();
 }
 
+void SettingsModule::setTelemetryEnabled(bool enabled) {
+    settings.telemetryEnabled = enabled;
+    save();
+}
+
+void SettingsModule::setTareOffset(long offset) {
+    settings.tareOffset = offset;
+    save();
+}
+
+void SettingsModule::handleSetServer(String args) {
+    if (args.length() == 0) {
+        Logger::warn("Usage: set_server <URL>");
+        return;
+    }
+    strncpy(settings.serverUrl, args.c_str(), sizeof(settings.serverUrl) - 1);
+    settings.serverUrl[sizeof(settings.serverUrl) - 1] = '\0';
+    save();
+}
+
+void SettingsModule::handleTelemetry(String args) {
+    if (args == "on") {
+        setTelemetryEnabled(true);
+        Logger::info("Telemetry Enabled! Will deep sleep and post data automatically.");
+    } else if (args == "off") {
+        setTelemetryEnabled(false);
+        Logger::info("Telemetry Disabled!");
+    } else {
+        Logger::warn("Usage: telemetry <on/off>");
+    }
+}
+
 void SettingsModule::handlePrintSettings(String args) {
     Logger::rawln("=== System Settings ===");
     
@@ -110,6 +152,12 @@ void SettingsModule::handlePrintSettings(String args) {
     
     Logger::raw("NTP Server : ");
     Logger::rawln(settings.ntpServer);
+    
+    Logger::raw("Server URL : ");
+    Logger::rawln(settings.serverUrl);
+    
+    Logger::raw("Telemetry  : ");
+    Logger::rawln(settings.telemetryEnabled ? "ON" : "OFF");
     
     Logger::rawln("=======================");
 }

@@ -102,21 +102,26 @@ void TimeModule::syncWithNTP() {
     Logger::info("WiFi disconnected.");
 }
 
-void TimeModule::handleTimeCommand(String args) {
+String TimeModule::getTimeString() {
     if (!rtcFound) {
-        Logger::error("RTC module not found!");
-        return;
+        return "1970-01-01 00:00:00";
     }
-
     DateTime now = rtc.now();
-    
     char buf[32];
     snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d",
              now.year(), now.month(), now.day(),
              now.hour(), now.minute(), now.second());
-             
-    Logger::rawln("Current RTC Time:");
-    Logger::rawln(buf);
+    return String(buf);
+}
+
+void TimeModule::handleTimeCommand(String args) {
+    if (!rtcFound) {
+        Logger::error("RTC not initialized. Cannot read time.");
+        return;
+    }
+    
+    Logger::raw("Current RTC Time: ");
+    Logger::rawln(getTimeString().c_str());
 }
 
 void TimeModule::handleSyncCommand(String args) {
