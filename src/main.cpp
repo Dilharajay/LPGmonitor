@@ -56,11 +56,6 @@ void setup()
     gasSensor.setLeakThreshold(settingsModule.getGasLeakThreshold());
     
     // 6. Register Global Commands to CLI
-    cli.registerCommand("d", "Toggle debug logging output", [](String args) {
-        bool newMode = !Logger::isDebugMode();
-        Logger::setDebugMode(newMode);
-        Logger::info(newMode ? "Debug logging: ON" : "Debug logging: OFF");
-    });
     cli.registerCommand("debug", "Toggle debug logging output", [](String args) {
         bool newMode = !Logger::isDebugMode();
         Logger::setDebugMode(newMode);

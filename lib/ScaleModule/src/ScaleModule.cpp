@@ -2,20 +2,19 @@
 #include "Logger.h"
 
 ScaleModule::ScaleModule(ScaleDriver& driver) : 
-    scaleDriver(driver), settings(nullptr) {}
+    scaleDriver(driver), settings(nullptr), isStreamingData(false) {}
 
 void ScaleModule::begin(TerminalCLI& cli, SettingsModule& s) {
     settings = &s;
     // Register commands with lambda bindings to this instance
-    cli.registerCommand("t", "Tare the scale (zero it)", 
-                        [this](String args) { this->handleTare(args); });
     cli.registerCommand("tare", "Tare the scale (zero it)", 
                         [this](String args) { this->handleTare(args); });
 
-    cli.registerCommand("c", "Calibrate with a known weight (e.g., c 148)", 
+    cli.registerCommand("calibrate", "Calibrate with a known weight (e.g., calibrate 148)", 
                         [this](String args) { this->handleCalibrate(args); });
-    cli.registerCommand("calibrate", "Calibrate with a known weight", 
-                        [this](String args) { this->handleCalibrate(args); });
+
+    cli.registerCommand("stream", "Toggle continuous weight streaming", 
+                        [this](String args) { this->handleStream(args); });
 }
 
 void ScaleModule::handleTare(String args) {
@@ -32,7 +31,23 @@ void ScaleModule::handleCalibrate(String args) {
     scaleDriver.performCalibration(knownWeight);
 }
 
+void ScaleModule::handleStream(String args) {
+    isStreamingData = !isStreamingData;
+    Logger::info(isStreamingData ? "Data streaming: ON" : "Data streaming: OFF");
+}
+
 void ScaleModule::update() {
     // 1. Update hardware
     scaleDriver.update();
+    
+    // 2. Output stream if enabled
+    if (isStreamingData) {
+        float weight = scaleDriver.getFilteredWeight();
+        
+        Logger::raw("Weight: ");
+        Logger::raw(weight, 1);
+        Logger::raw(" g    ");
+        Logger::raw(weight / 1000.0, 3);
+        Logger::rawln(" kg");
+    }
 }

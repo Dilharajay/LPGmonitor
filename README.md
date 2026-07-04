@@ -28,8 +28,9 @@ The device publishes to the following topics (`lpgmonitor/` prefix):
 Connect via Serial Monitor (115200 baud by default). Here are some useful commands:
 
 ### Hardware Commands
-- `t` or `tare`: Tare the scale (zero it).
-- `c <weight>` or `calibrate <weight>`: Calibrate the scale with a known weight in grams.
+- `tare`: Tare the scale (zero it).
+- `calibrate <weight>`: Calibrate the scale with a known weight in grams.
+- `stream`: Toggle continuous weight output.
 - `gas`: Read the current MQ-6 gas sensor value.
 - `gas_threshold <ppm>`: Set the gas leak threshold (default 700).
 
@@ -42,7 +43,7 @@ Connect via Serial Monitor (115200 baud by default). Here are some useful comman
 - `set_mqtt_pwd <PASSWORD>`: Set the MQTT password.
 - `web <on/off>`: Enable or disable the local web dashboard.
 - `settings`: View all current configurations.
-- `d` or `debug`: Toggle debug logging.
+- `debug`: Toggle debug logging.
 
 ## Build & Upload
 
