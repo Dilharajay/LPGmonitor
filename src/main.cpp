@@ -4,11 +4,15 @@
 #include "ScaleModule.h"
 #include "Logger.h"
 #include "Config.h"
+#include "SettingsModule.h"
+#include "TimeModule.h"
 
 // ── Global Modules ─────────────────────────────────────────────────
 TerminalCLI cli;
 ScaleDriver scaleDriver;
 ScaleModule scaleModule(scaleDriver);
+SettingsModule settingsModule;
+TimeModule  timeModule;
 
 void setup()
 {
@@ -33,7 +37,9 @@ void setup()
     });
     
     // 4. Initialize and Register Feature Modules
+    settingsModule.begin(cli);
     scaleModule.begin(cli);
+    timeModule.begin(cli, settingsModule);
     
     // 5. Start CLI (prints welcome prompt and help)
     cli.begin("\n=== System Ready ===");
@@ -47,6 +53,7 @@ void loop()
     
     // Update feature modules (e.g. read sensors, stream data)
     scaleModule.update();
+    timeModule.update();
     
     // Yield to ESP8266 background tasks
     delay(10);
