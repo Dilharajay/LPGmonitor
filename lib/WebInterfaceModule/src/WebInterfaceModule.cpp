@@ -33,8 +33,8 @@ const char* htmlPage = R"rawliteral(
       <input type="text" id="ntpServer">
     </div>
     <div class="form-group">
-      <label>Timezone Offset (Seconds)</label>
-      <input type="number" id="tzOffset">
+      <label>Timezone Offset (Hours from UTC)</label>
+      <input type="number" step="0.5" id="tzOffset">
     </div>
     <div class="form-group">
       <label>Tare Offset</label>
@@ -60,7 +60,7 @@ const char* htmlPage = R"rawliteral(
           
           if (!document.getElementById('ntpServer').dataset.loaded) {
             document.getElementById('ntpServer').value = data.ntp_server;
-            document.getElementById('tzOffset').value = data.tz_offset;
+            document.getElementById('tzOffset').value = (data.tz_offset / 3600).toFixed(1);
             document.getElementById('tareOffset').value = data.tare_offset;
             document.getElementById('ntpServer').dataset.loaded = 'true';
           }
@@ -71,7 +71,7 @@ const char* htmlPage = R"rawliteral(
     function saveConfig() {
       const data = {
         ntp_server: document.getElementById('ntpServer').value,
-        tz_offset: parseInt(document.getElementById('tzOffset').value),
+        tz_offset: Math.round(parseFloat(document.getElementById('tzOffset').value) * 3600),
         tare_offset: parseInt(document.getElementById('tareOffset').value)
       };
       

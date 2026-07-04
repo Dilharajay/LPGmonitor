@@ -75,7 +75,7 @@ void SettingsModule::resetToDefaults() {
     settings.tareOffset = 0;
     settings.sleepIntervalSec = 3600;
     settings.debugMode = false;
-    settings.timezoneOffsetSec = 0;
+    settings.timezoneOffsetSec = 19800; // +5:30 IST default
     
     save();
 }
