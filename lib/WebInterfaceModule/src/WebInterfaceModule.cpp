@@ -335,7 +335,7 @@ function saveConfig(){
     empty_cyl_weight:parseFloat(document.getElementById('cfgEmptyWeight').value),
     gas_threshold:parseInt(document.getElementById('cfgGasThreshold').value)
   };
-  fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+  fetch('/api/config',{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)})
   .then(function(r){return r.json()})
   .then(function(){alert('Settings saved!');toggleSettings();})
   .catch(function(e){alert('Error: '+e)});
@@ -343,8 +343,9 @@ function saveConfig(){
 
 // ── Tare ──
 function tareScale(){
-  fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'tare'})})
-  .then(function(){cfgLoaded=false;alert('Scale tared!');});
+  fetch('/api/config',{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'tare'})})
+  .then(function(){cfgLoaded=false;alert('Scale tared!');})
+  .catch(function(e){alert('Error: '+e)});
 }
 
 setInterval(fetchStatus,1500);
@@ -410,13 +411,18 @@ void WebInterfaceModule::handleStatus() {
 }
 
 void WebInterfaceModule::handleConfig() {
-    if (server.hasArg("plain") == false) {
+    String body;
+    if (server.hasArg("plain")) {
+        body = server.arg("plain");
+    } else if (server.args() > 0) {
+        body = server.arg(0);
+    } else {
         server.send(400, "application/json", "{\"error\":\"Body not received\"}");
         return;
     }
 
     JsonDocument doc;
-    DeserializationError error = deserializeJson(doc, server.arg("plain"));
+    DeserializationError error = deserializeJson(doc, body);
     if (error) {
         server.send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
         return;
