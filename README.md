@@ -1,31 +1,52 @@
-# Digital Scale Firmware
+# Smart LPG Gas Monitor
 
-Modular ESP8266-based digital scale firmware, featuring a flexible CLI system and advanced signal filtering.
+An ESP8266-based Smart LPG (Liquefied Petroleum Gas) Cylinder Monitor. It measures the remaining gas using an HX711 load cell and detects gas leaks using an MQ-6 gas sensor. Data is streamed to Home Assistant via MQTT and can be viewed on a beautifully designed, dark-themed local Web Dashboard.
 
 ## Features
-- **Generic Terminal CLI:** A modular, extensible command-line interface that echoes input, handles backspaces, and auto-generates help menus.
-- **Scale Module:** Encapsulates the HX711 scale driver, providing commands for tare, calibration, and streaming.
+
+- **Gas Cylinder Weight Monitoring:** Uses an HX711 to precisely measure the weight of the cylinder and calculates the remaining gas percentage based on configured empty/full cylinder weights.
+- **Gas Leak Detection:** Uses an MQ-6 sensor to detect LPG gas leaks and trigger alerts in ppm.
+- **Home Assistant Integration:** Default data output is via MQTT, publishing telemetry every 30 seconds for easy integration into Home Assistant or other smart home platforms.
+- **Local Web Dashboard:** A responsive, dark-themed UI hosted directly on the ESP8266 showing circular gauges for gas level, leak status, and live logs. Can be toggled on/off to save resources.
 - **Advanced Filtering Pipeline:**
-  - **Negative Rejection:** Ignores erroneous `< 0` readings.
+  - **Negative Rejection:** Ignores erroneous `< 0` load cell readings.
   - **Median Filter:** A 5-sample moving median window that rejects impulse noise/spikes.
-  - **Exponential Moving Average (EMA):** Smooths the median output with an adjustable `alpha` (default 0.15) for stable readings.
-- **Centralized Configuration:** Tune hardware pins, serial baud rate, and filter settings in a single `include/Config.h` file.
-- **Smart Logger:** Tagged logging levels (`DEBUG`, `INFO`, `WARN`, `ERROR`) with millisecond uptimes.
+  - **Exponential Moving Average (EMA):** Smooths the median output with an adjustable `alpha` for stable readings.
+- **Terminal CLI:** A modular command-line interface over Serial to easily configure WiFi, MQTT, tare the scale, or debug.
+- **NTP Time Sync:** Automatically syncs with NTP servers if an RTC module is not installed or has the wrong time.
+
+## MQTT Topics
+
+The device publishes to the following topics (`lpgmonitor/` prefix):
+- `lpgmonitor/weight`: The current weight in kg.
+- `lpgmonitor/gas_level`: The remaining gas percentage (0-100%).
+- `lpgmonitor/gas_ppm`: The MQ-6 gas sensor reading in ppm.
+- `lpgmonitor/status`: "Normal" or "Leak" based on the configured leak threshold.
 
 ## CLI Commands
-Connect via Serial Monitor (115200 baud by default):
+
+Connect via Serial Monitor (115200 baud by default). Here are some useful commands:
+
+### Hardware Commands
 - `t` or `tare`: Tare the scale (zero it).
 - `c <weight>` or `calibrate <weight>`: Calibrate the scale with a known weight in grams.
-- `s` or `stream`: Toggle continuous weight output.
-- `d` or `debug`: Toggle debug logging.
-- `help` or `?`: Display the available commands.
+- `gas`: Read the current MQ-6 gas sensor value.
+- `gas_threshold <ppm>`: Set the gas leak threshold (default 700).
 
-## Architecture
-The system is built to easily support new hardware modules (e.g., displays, motors).
-Just define your module, register its commands using `cli.registerCommand()`, and update it in `main.cpp`!
+### Configuration Commands
+- `set_ssid <SSID>`: Set the WiFi network name.
+- `set_pwd <PASSWORD>`: Set the WiFi password.
+- `set_mqtt_broker <URL/IP>`: Set the MQTT broker address (e.g., `homeassistant.local`).
+- `set_mqtt_port <PORT>`: Set the MQTT port (default 1883).
+- `set_mqtt_user <USER>`: Set the MQTT username.
+- `set_mqtt_pwd <PASSWORD>`: Set the MQTT password.
+- `web <on/off>`: Enable or disable the local web dashboard.
+- `settings`: View all current configurations.
+- `d` or `debug`: Toggle debug logging.
 
 ## Build & Upload
-This project is built using PlatformIO.
+
+This project is built using [PlatformIO](https://platformio.org/).
 
 ```bash
 pio run -e nodemcuv2 -t upload

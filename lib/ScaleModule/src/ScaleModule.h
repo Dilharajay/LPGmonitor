@@ -19,12 +19,10 @@ public:
 private:
     ScaleDriver& scaleDriver;
     SettingsModule* settings;
-    bool isStreamingData;
     
     // Command handlers
     void handleTare(String args);
     void handleCalibrate(String args);
-    void handleStream(String args);
 };
 
 #endif
