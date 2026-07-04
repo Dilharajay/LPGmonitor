@@ -33,9 +33,12 @@ void setup()
 
     // 3. Connect to WiFi
     Logger::info("Connecting to WiFi...");
+    WiFi.mode(WIFI_STA);
+    WiFi.disconnect();
+    delay(100);
     WiFi.begin(settingsModule.getSSID(), settingsModule.getPassword());
     int attempts = 0;
-    while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+    while (WiFi.status() != WL_CONNECTED && attempts < 30) {
         delay(500);
         Logger::raw(".");
         attempts++;
