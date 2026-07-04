@@ -2,6 +2,7 @@
 
 bool     Logger::debugMode = false;
 LogLevel Logger::minLevel  = LogLevel::INFO;  // show INFO and above by default
+String   Logger::logBuffer = "";
 
 void Logger::begin(bool enableDebug) {
     debugMode = enableDebug;
@@ -24,6 +25,17 @@ void Logger::setLogLevel(LogLevel level) {
 
 LogLevel Logger::getLogLevel() {
     return minLevel;
+}
+
+String Logger::getLogBuffer() {
+    return logBuffer;
+}
+
+void Logger::appendLog(String s) {
+    logBuffer += s;
+    if (logBuffer.length() > 2000) {
+        logBuffer = logBuffer.substring(logBuffer.length() - 1000);
+    }
 }
 
 // ── Tag prefix with uptime timestamp ──────────────────────────────
@@ -50,4 +62,6 @@ void Logger::printPrefix(LogLevel level) {
     Serial.print("] (");
     Serial.print(timeBuf);
     Serial.print(") ");
+    
+    appendLog(String("[") + tag + "] (" + timeBuf + ") ");
 }

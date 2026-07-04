@@ -6,7 +6,7 @@
 #include "Config.h"
 #include "SettingsModule.h"
 #include "TimeModule.h"
-#include "TelemetryModule.h"
+#include "WebInterfaceModule.h"
 
 // ── Global Modules ─────────────────────────────────────────────────
 TerminalCLI cli;
@@ -14,7 +14,7 @@ ScaleDriver scaleDriver;
 ScaleModule scaleModule(scaleDriver);
 SettingsModule settingsModule;
 TimeModule  timeModule;
-TelemetryModule telemetryModule(scaleDriver, timeModule);
+WebInterfaceModule webModule(scaleDriver, timeModule);
 
 void setup()
 {
@@ -48,8 +48,8 @@ void setup()
     // 6. Start CLI (prints welcome prompt and help)
     cli.begin("\n=== System Ready ===");
 
-    // 7. Telemetry Mode Check (blocks and deep sleeps if enabled)
-    telemetryModule.begin(cli, settingsModule);
+    // 7. Start Web Server Interface
+    webModule.begin(settingsModule, cli);
     cli.printHelp();
 }
 
@@ -61,7 +61,7 @@ void loop()
     // Update feature modules (e.g. read sensors, stream data)
     scaleModule.update();
     timeModule.update();
-    telemetryModule.update();
+    webModule.update();
     
     // Yield to ESP8266 background tasks
     delay(10);

@@ -71,15 +71,26 @@ long ScaleDriver::performTare() {
     }
 
     if (valid > 0) {
-        long newOffset = sum / valid;
-        scale.set_offset(newOffset);
-        Logger::info("Tare complete!");
+        scale.tare(10);
+        long offset = scale.get_offset();
+        Logger::info("Scale Tared. New Offset: ");
+        Logger::info(String(offset).c_str());
         resetFilters();
-        return newOffset;
+        return offset;
     } else {
         Logger::error("Tare failed! HX711 timeout.");
         return 0;
     }
+}
+
+long ScaleDriver::getTareOffset() {
+    return scale.get_offset();
+}
+
+void ScaleDriver::setTareOffset(long offset) {
+    scale.set_offset(offset);
+    Logger::info("Applied tare offset: ");
+    Logger::info(String(offset).c_str());
 }
 
 // ── Calibration ────────────────────────────────────────────────────

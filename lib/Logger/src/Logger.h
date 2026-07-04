@@ -18,6 +18,7 @@ public:
     static bool isDebugMode();
     static void setLogLevel(LogLevel level);
     static LogLevel getLogLevel();
+    static String getLogBuffer();
 
     // ── Levelled one-liner helpers (print tag + message + newline) ──
 
@@ -82,6 +83,8 @@ public:
 private:
     static bool     debugMode;
     static LogLevel minLevel;
+    static String   logBuffer;
+    static void     appendLog(String s);
 
     // Print the tag prefix:  "[  INFO ] (  1234) "
     static void printPrefix(LogLevel level);
@@ -92,6 +95,7 @@ private:
         if (level < minLevel) return;
         printPrefix(level);
         Serial.println(msg);
+        appendLog(String(msg) + "\n");
     }
 
     template <typename T, typename U>
@@ -99,6 +103,8 @@ private:
         if (level < minLevel) return;
         printPrefix(level);
         Serial.println(msg, fmt);
+        // Best effort for formatted print logging
+        appendLog(String(msg) + "\n"); 
     }
 };
 

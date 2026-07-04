@@ -14,6 +14,8 @@ public:
     
     // Commands
     long performTare();
+    long getTareOffset();
+    void setTareOffset(long offset);
     void performCalibration(float knownWeight);
     
     // Read the next sample and run it through the filter pipeline
