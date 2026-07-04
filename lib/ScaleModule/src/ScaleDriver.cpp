@@ -154,8 +154,7 @@ float ScaleDriver::computeMedian() {
 //  Pipeline:  raw HX711  →  reject < 0  →  median  →  EMA  →  output
 //
 void ScaleDriver::update() {
-    if (!scale.wait_ready_timeout(1000)) {
-        Logger::warn("Timeout waiting for HX711 data (in update)");
+    if (!scale.is_ready()) {
         return;
     }
 

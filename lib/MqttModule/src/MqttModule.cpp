@@ -11,7 +11,7 @@ void MqttModule::begin(SettingsModule& settings) {
 }
 
 void MqttModule::update() {
-    if (WiFi.status() != WL_CONNECTED) {
+    if (WiFi.status() != WL_CONNECTED || !_settings->isTelemetryEnabled()) {
         return;
     }
 
