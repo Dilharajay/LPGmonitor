@@ -75,6 +75,7 @@ void SettingsModule::resetToDefaults() {
     settings.tareOffset = 0;
     settings.sleepIntervalSec = 3600;
     settings.debugMode = false;
+    settings.timezoneOffsetSec = 0;
     
     save();
 }
@@ -126,6 +127,11 @@ void SettingsModule::setSleepIntervalSec(long sec) {
 
 void SettingsModule::setDebugMode(bool enabled) {
     settings.debugMode = enabled;
+    save();
+}
+
+void SettingsModule::setTimezoneOffsetSec(long sec) {
+    settings.timezoneOffsetSec = sec;
     save();
 }
 

@@ -62,7 +62,7 @@ void TimeModule::syncWithNTP() {
     
     // Setup NTP
     Logger::info("Requesting time from NTP server...");
-    configTime(Config::GMT_OFFSET_SEC, Config::DAYLIGHT_OFFSET_SEC, settings->getNtpServer());
+    configTime(settings->getTimezoneOffsetSec(), Config::DAYLIGHT_OFFSET_SEC, settings->getNtpServer());
 
     // Wait for time to be set
     time_t now = time(nullptr);
@@ -79,7 +79,7 @@ void TimeModule::syncWithNTP() {
         Logger::error("Failed to get time from NTP server.");
     } else {
         struct tm timeinfo;
-        gmtime_r(&now, &timeinfo);
+        localtime_r(&now, &timeinfo); // Use local time for RTC
         
         // Output fetched time
         char timeStr[64];

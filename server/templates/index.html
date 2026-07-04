@@ -53,6 +53,10 @@
                     <input type="number" name="sleep_interval_sec" value="{{ config.sleep_interval_sec }}" min="10" required style="width: 100%; padding: 8px;">
                 </div>
                 <div class="form-group">
+                    <label>Timezone Offset (Hours from UTC)</label>
+                    <input type="number" step="0.5" name="timezone_offset_hours" value="{{ config.timezone_offset_sec / 3600 }}" required style="width: 100%; padding: 8px;" placeholder="e.g. 5.5 for IST">
+                </div>
+                <div class="form-group">
                     <label>NTP Server</label>
                     <input type="text" name="ntp_server" value="{{ config.ntp_server }}" required>
                 </div>

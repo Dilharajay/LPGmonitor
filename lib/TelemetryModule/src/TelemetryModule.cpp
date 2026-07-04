@@ -113,6 +113,11 @@ void TelemetryModule::postData() {
                     settings->setSleepIntervalSec(sleepSec);
                     Logger::info("Sleep interval updated.");
                 }
+                if (!doc["config"]["timezone_offset_sec"].isNull()) {
+                    long tzOffset = doc["config"]["timezone_offset_sec"];
+                    settings->setTimezoneOffsetSec(tzOffset);
+                    Logger::info("Timezone offset updated.");
+                }
                 if (!doc["config"]["debug_mode"].isNull()) {
                     bool debugMode = doc["config"]["debug_mode"];
                     settings->setDebugMode(debugMode);

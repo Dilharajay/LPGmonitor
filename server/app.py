@@ -21,6 +21,7 @@ class DeviceConfig(db.Model):
     telemetry_enabled = db.Column(db.Boolean, default=False)
     ntp_server = db.Column(db.String(100), default="pool.ntp.org")
     sleep_interval_sec = db.Column(db.Integer, default=3600)
+    timezone_offset_sec = db.Column(db.Integer, default=0)
     debug_mode = db.Column(db.Boolean, default=False)
     update_pending = db.Column(db.Boolean, default=False)
 
@@ -47,6 +48,8 @@ def update_config():
         config.telemetry_enabled = 'telemetry_enabled' in request.form
         config.ntp_server = request.form.get('ntp_server', 'pool.ntp.org')
         config.sleep_interval_sec = int(request.form.get('sleep_interval_sec', 3600))
+        tz_hours = float(request.form.get('timezone_offset_hours', 0.0))
+        config.timezone_offset_sec = int(tz_hours * 3600)
         config.debug_mode = 'debug_mode' in request.form
         config.update_pending = True
         db.session.commit()
@@ -83,6 +86,7 @@ def receive_weight():
             'telemetry': 'on' if config.telemetry_enabled else 'off',
             'ntp_server': config.ntp_server,
             'sleep_interval_sec': config.sleep_interval_sec,
+            'timezone_offset_sec': config.timezone_offset_sec,
             'debug_mode': config.debug_mode
         }
         # Reset the flag since we're dispatching it now

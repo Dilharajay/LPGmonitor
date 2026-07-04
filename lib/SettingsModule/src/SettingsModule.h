@@ -15,6 +15,7 @@ struct SystemSettings {
     long tareOffset;
     long sleepIntervalSec;
     bool debugMode;
+    long timezoneOffsetSec;
 };
 
 class SettingsModule {
@@ -30,11 +31,13 @@ public:
     long getTareOffset() const { return settings.tareOffset; }
     long getSleepIntervalSec() const { return settings.sleepIntervalSec; }
     bool isDebugMode() const { return settings.debugMode; }
+    long getTimezoneOffsetSec() const { return settings.timezoneOffsetSec; }
     
     void setTelemetryEnabled(bool enabled);
     void setTareOffset(long offset);
     void setSleepIntervalSec(long sec);
     void setDebugMode(bool enabled);
+    void setTimezoneOffsetSec(long sec);
     void setNtpServer(const char* ntp);
     void setServerUrl(const char* url);
 
