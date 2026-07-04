@@ -2,7 +2,7 @@
 #include "Logger.h"
 
 #define EEPROM_SIZE 512
-#define MAGIC_WORD "CFG2"
+#define MAGIC_WORD "CFG3"
 
 SettingsModule::SettingsModule() {
     // Defaults will be loaded in begin()
@@ -29,6 +29,16 @@ void SettingsModule::begin(TerminalCLI& cli) {
         [this](String args) { this->handleSetServer(args); });
     cli.registerCommand("telemetry", "Enable/Disable Telemetry (on/off)", 
         [this](String args) { this->handleTelemetry(args); });
+    cli.registerCommand("web", "Enable/Disable Web Interface (on/off)", 
+        [this](String args) { this->handleWebCommand(args); });
+    cli.registerCommand("set_mqtt_broker", "Set MQTT Broker", 
+        [this](String args) { this->handleSetMqttBroker(args); });
+    cli.registerCommand("set_mqtt_port", "Set MQTT Port", 
+        [this](String args) { this->handleSetMqttPort(args); });
+    cli.registerCommand("set_mqtt_user", "Set MQTT User", 
+        [this](String args) { this->handleSetMqttUser(args); });
+    cli.registerCommand("set_mqtt_pwd", "Set MQTT Password", 
+        [this](String args) { this->handleSetMqttPassword(args); });
     cli.registerCommand("settings", "View current settings", 
         [this](String args) { this->handlePrintSettings(args); });
 }
@@ -79,6 +89,15 @@ void SettingsModule::resetToDefaults() {
     settings.fullCylinderWeight = 20000.0f;   // 20kg
     settings.emptyCylinderWeight = 6500.0f;   // 6.5kg
     settings.gasLeakThreshold = 700;
+    
+    settings.webInterfaceEnabled = false; // Default is off (MQTT is default)
+    strncpy(settings.mqttBroker, "homeassistant.local", sizeof(settings.mqttBroker) - 1);
+    settings.mqttBroker[sizeof(settings.mqttBroker) - 1] = '\0';
+    settings.mqttPort = 1883;
+    strncpy(settings.mqttUser, "", sizeof(settings.mqttUser) - 1);
+    settings.mqttUser[sizeof(settings.mqttUser) - 1] = '\0';
+    strncpy(settings.mqttPassword, "", sizeof(settings.mqttPassword) - 1);
+    settings.mqttPassword[sizeof(settings.mqttPassword) - 1] = '\0';
     
     save();
 }
@@ -165,6 +184,34 @@ void SettingsModule::setGasLeakThreshold(int ppm) {
     save();
 }
 
+void SettingsModule::setWebInterfaceEnabled(bool enabled) {
+    settings.webInterfaceEnabled = enabled;
+    save();
+}
+
+void SettingsModule::setMqttBroker(const char* broker) {
+    strncpy(settings.mqttBroker, broker, sizeof(settings.mqttBroker) - 1);
+    settings.mqttBroker[sizeof(settings.mqttBroker) - 1] = '\0';
+    save();
+}
+
+void SettingsModule::setMqttPort(int port) {
+    settings.mqttPort = port;
+    save();
+}
+
+void SettingsModule::setMqttUser(const char* user) {
+    strncpy(settings.mqttUser, user, sizeof(settings.mqttUser) - 1);
+    settings.mqttUser[sizeof(settings.mqttUser) - 1] = '\0';
+    save();
+}
+
+void SettingsModule::setMqttPassword(const char* pwd) {
+    strncpy(settings.mqttPassword, pwd, sizeof(settings.mqttPassword) - 1);
+    settings.mqttPassword[sizeof(settings.mqttPassword) - 1] = '\0';
+    save();
+}
+
 void SettingsModule::handleSetServer(String args) {
     if (args.length() == 0) {
         Logger::warn("Usage: set_server <URL>");
@@ -185,6 +232,54 @@ void SettingsModule::handleTelemetry(String args) {
     } else {
         Logger::warn("Usage: telemetry <on/off>");
     }
+}
+
+void SettingsModule::handleWebCommand(String args) {
+    if (args == "on") {
+        setWebInterfaceEnabled(true);
+        Logger::info("Web Interface Enabled!");
+    } else if (args == "off") {
+        setWebInterfaceEnabled(false);
+        Logger::info("Web Interface Disabled!");
+    } else {
+        Logger::warn("Usage: web <on/off>");
+    }
+}
+
+void SettingsModule::handleSetMqttBroker(String args) {
+    if (args.length() == 0) {
+        Logger::warn("Usage: set_mqtt_broker <Broker>");
+        return;
+    }
+    setMqttBroker(args.c_str());
+    Logger::info("MQTT Broker updated");
+}
+
+void SettingsModule::handleSetMqttPort(String args) {
+    if (args.length() == 0) {
+        Logger::warn("Usage: set_mqtt_port <Port>");
+        return;
+    }
+    setMqttPort(args.toInt());
+    Logger::info("MQTT Port updated");
+}
+
+void SettingsModule::handleSetMqttUser(String args) {
+    if (args.length() == 0) {
+        Logger::warn("Usage: set_mqtt_user <User>");
+        return;
+    }
+    setMqttUser(args.c_str());
+    Logger::info("MQTT User updated");
+}
+
+void SettingsModule::handleSetMqttPassword(String args) {
+    if (args.length() == 0) {
+        Logger::warn("Usage: set_mqtt_pwd <Password>");
+        return;
+    }
+    setMqttPassword(args.c_str());
+    Logger::info("MQTT Password updated");
 }
 
 void SettingsModule::handlePrintSettings(String args) {
@@ -215,6 +310,18 @@ void SettingsModule::handlePrintSettings(String args) {
     
     Logger::raw("Gas Leak   : ");
     Logger::rawln(String(settings.gasLeakThreshold) + " ppm");
+    
+    Logger::raw("Web UI     : ");
+    Logger::rawln(settings.webInterfaceEnabled ? "ON" : "OFF");
+
+    Logger::raw("MQTT Broker: ");
+    Logger::rawln(settings.mqttBroker);
+
+    Logger::raw("MQTT Port  : ");
+    Logger::rawln(String(settings.mqttPort));
+
+    Logger::raw("MQTT User  : ");
+    Logger::rawln(settings.mqttUser);
     
     Logger::rawln("=======================");
 }

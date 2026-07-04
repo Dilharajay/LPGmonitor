@@ -363,20 +363,8 @@ void WebInterfaceModule::begin(SettingsModule& s, TerminalCLI& cli) {
     settings = &s;
     bootTimeMs = millis();
 
-    if (WiFi.status() != WL_CONNECTED) {
-        Logger::info("WebInterface: Connecting to WiFi...");
-        WiFi.begin(settings->getSSID(), settings->getPassword());
-        int attempts = 0;
-        while (WiFi.status() != WL_CONNECTED && attempts < 20) {
-            delay(500);
-            Logger::raw(".");
-            attempts++;
-        }
-        Logger::rawln();
-    }
-
     if (WiFi.status() == WL_CONNECTED) {
-        Logger::info("Web Server IP: ");
+        Logger::info("Web Interface Server IP: ");
         Logger::info(WiFi.localIP().toString().c_str());
 
         server.on("/", HTTP_GET, [this]() { this->handleRoot(); });

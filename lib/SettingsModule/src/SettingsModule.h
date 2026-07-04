@@ -19,6 +19,11 @@ struct SystemSettings {
     float fullCylinderWeight;    // Weight of a full cylinder in grams (default 20000g = 20kg)
     float emptyCylinderWeight;   // Weight of empty cylinder shell in grams (default 6500g = 6.5kg)
     int gasLeakThreshold;        // MQ-6 ppm threshold for leak alert (default 700)
+    bool webInterfaceEnabled;
+    char mqttBroker[65];
+    int mqttPort;
+    char mqttUser[33];
+    char mqttPassword[65];
 };
 
 class SettingsModule {
@@ -38,6 +43,11 @@ public:
     float getFullCylinderWeight() const { return settings.fullCylinderWeight; }
     float getEmptyCylinderWeight() const { return settings.emptyCylinderWeight; }
     int getGasLeakThreshold() const { return settings.gasLeakThreshold; }
+    bool isWebInterfaceEnabled() const { return settings.webInterfaceEnabled; }
+    const char* getMqttBroker() const { return settings.mqttBroker; }
+    int getMqttPort() const { return settings.mqttPort; }
+    const char* getMqttUser() const { return settings.mqttUser; }
+    const char* getMqttPassword() const { return settings.mqttPassword; }
     
     void setTelemetryEnabled(bool enabled);
     void setTareOffset(long offset);
@@ -49,6 +59,11 @@ public:
     void setFullCylinderWeight(float w);
     void setEmptyCylinderWeight(float w);
     void setGasLeakThreshold(int ppm);
+    void setWebInterfaceEnabled(bool enabled);
+    void setMqttBroker(const char* broker);
+    void setMqttPort(int port);
+    void setMqttUser(const char* user);
+    void setMqttPassword(const char* pwd);
 
 private:
     SystemSettings settings;
@@ -64,6 +79,11 @@ private:
     void handleSetServer(String args);
     void handleTelemetry(String args);
     void handlePrintSettings(String args);
+    void handleWebCommand(String args);
+    void handleSetMqttBroker(String args);
+    void handleSetMqttPort(String args);
+    void handleSetMqttUser(String args);
+    void handleSetMqttPassword(String args);
 };
 
 #endif
