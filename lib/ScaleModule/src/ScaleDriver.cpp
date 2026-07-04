@@ -26,13 +26,8 @@ void ScaleDriver::begin(uint8_t doutPin, uint8_t sckPin, float calFactor, long s
     Logger::debug("Checking HX711 connection...");
 
     if (scale.wait_ready_timeout(2000)) {
-        if (savedOffset == 0) {
-            Logger::info("HX711 connected! Taring...");
-            performTare();
-        } else {
-            Logger::info("HX711 connected! Restoring tare offset from EEPROM.");
-            scale.set_offset(savedOffset);
-        }
+        Logger::info("HX711 connected! Restoring tare offset from EEPROM.");
+        scale.set_offset(savedOffset);
     } else {
         Logger::error("HX711 not found!");
         Logger::error("Check wiring! Ensure DT is on D2 and SCK is on D1.");

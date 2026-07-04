@@ -28,8 +28,25 @@ void TimeModule::begin(TerminalCLI& cli, SettingsModule& s) {
     cli.registerCommand("sync", "Sync RTC time with NTP Server via WiFi", 
         [this](String args) { this->handleSyncCommand(args); });
 
-    // Automatically try to sync at startup
-    syncWithNTP();
+    // Automatically try to sync at startup if needed
+    bool needsSync = false;
+    if (!rtcFound) {
+        needsSync = true;
+    } else if (!rtc.isrunning()) {
+        needsSync = true;
+    } else {
+        DateTime now = rtc.now();
+        if (now.year() < 2024) {
+            needsSync = true;
+        }
+    }
+
+    if (needsSync) {
+        Logger::info("Time is not set. Syncing with NTP...");
+        syncWithNTP();
+    } else {
+        Logger::info("RTC time looks valid. Skipping NTP sync.");
+    }
 }
 
 void TimeModule::update() {
@@ -97,9 +114,8 @@ void TimeModule::syncWithNTP() {
         }
     }
 
-    // Disconnect WiFi to save power/resources since we only need it for sync
-    WiFi.disconnect(true);
-    Logger::info("WiFi disconnected.");
+    // No need to disconnect WiFi since the web server will use it
+    Logger::info("NTP Sync completed.");
 }
 
 String TimeModule::getTimeString() {
