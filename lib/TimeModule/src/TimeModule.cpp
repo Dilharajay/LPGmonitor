@@ -104,8 +104,18 @@ void TimeModule::syncWithNTP() {
 
 String TimeModule::getTimeString() {
     if (!rtcFound) {
-        return "1970-01-01 00:00:00";
+        time_t now_t = time(nullptr);
+        if (now_t < 24 * 3600) {
+            return "1970-01-01 00:00:00"; // Not synced yet
+        }
+        struct tm* timeinfo = localtime(&now_t);
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d",
+                 timeinfo->tm_year + 1900, timeinfo->tm_mon + 1, timeinfo->tm_mday,
+                 timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
+        return String(buf);
     }
+    
     DateTime now = rtc.now();
     char buf[32];
     snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d",

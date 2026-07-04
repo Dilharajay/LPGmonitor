@@ -18,11 +18,11 @@ class WeightRecord(db.Model):
 
 class DeviceConfig(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    # The ESP8266 will read these if update_pending is True
-    update_pending = db.Column(db.Boolean, default=False)
-    telemetry_enabled = db.Column(db.Boolean, default=True)
+    telemetry_enabled = db.Column(db.Boolean, default=False)
     ntp_server = db.Column(db.String(100), default="pool.ntp.org")
     sleep_interval_sec = db.Column(db.Integer, default=3600)
+    debug_mode = db.Column(db.Boolean, default=False)
+    update_pending = db.Column(db.Boolean, default=False)
 
 with app.app_context():
     db.create_all()
@@ -43,15 +43,18 @@ def index():
 @app.route('/update_config', methods=['POST'])
 def update_config():
     config = DeviceConfig.query.first()
-    config.telemetry_enabled = 'telemetry_enabled' in request.form
-    config.ntp_server = request.form.get('ntp_server', 'pool.ntp.org')
-    
-    # Whenever the UI updates the config, we set update_pending to True
-    # so the ESP8266 knows it needs to apply these changes on its next wakeup.
-    config.update_pending = True
-    
-    db.session.commit()
+    if config:
+        config.telemetry_enabled = 'telemetry_enabled' in request.form
+        config.ntp_server = request.form.get('ntp_server', 'pool.ntp.org')
+        config.sleep_interval_sec = int(request.form.get('sleep_interval_sec', 3600))
+        config.debug_mode = 'debug_mode' in request.form
+        config.update_pending = True
+        db.session.commit()
     return redirect(url_for('index'))
+
+@app.route('/monitor')
+def monitor():
+    return render_template('monitor.html')
 
 # --- API Routes for ESP8266 ---
 
@@ -77,8 +80,10 @@ def receive_weight():
 
     if config.update_pending:
         response_payload["config"] = {
-            "telemetry": "on" if config.telemetry_enabled else "off",
-            "ntp_server": config.ntp_server
+            'telemetry': 'on' if config.telemetry_enabled else 'off',
+            'ntp_server': config.ntp_server,
+            'sleep_interval_sec': config.sleep_interval_sec,
+            'debug_mode': config.debug_mode
         }
         # Reset the flag since we're dispatching it now
         config.update_pending = False
@@ -86,6 +91,17 @@ def receive_weight():
     db.session.commit()
     
     return jsonify(response_payload), 200
+
+@app.route('/api/latest_weight', methods=['GET'])
+def latest_weight():
+    record = WeightRecord.query.order_by(WeightRecord.received_at.desc()).first()
+    if record:
+        return jsonify({
+            'timestamp': record.timestamp,
+            'weight_g': record.weight_g,
+            'received_at': record.received_at.isoformat()
+        })
+    return jsonify({'error': 'No data'}), 404
 
 if __name__ == '__main__':
     # Listen on all interfaces so the ESP8266 can reach it

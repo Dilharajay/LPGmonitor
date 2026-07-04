@@ -73,6 +73,8 @@ void SettingsModule::resetToDefaults() {
     
     settings.telemetryEnabled = false;
     settings.tareOffset = 0;
+    settings.sleepIntervalSec = 3600;
+    settings.debugMode = false;
     
     save();
 }
@@ -114,6 +116,16 @@ void SettingsModule::setTelemetryEnabled(bool enabled) {
 
 void SettingsModule::setTareOffset(long offset) {
     settings.tareOffset = offset;
+    save();
+}
+
+void SettingsModule::setSleepIntervalSec(long sec) {
+    settings.sleepIntervalSec = sec;
+    save();
+}
+
+void SettingsModule::setDebugMode(bool enabled) {
+    settings.debugMode = enabled;
     save();
 }
 

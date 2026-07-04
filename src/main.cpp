@@ -61,6 +61,7 @@ void loop()
     // Update feature modules (e.g. read sensors, stream data)
     scaleModule.update();
     timeModule.update();
+    telemetryModule.update();
     
     // Yield to ESP8266 background tasks
     delay(10);

@@ -5,7 +5,7 @@
 #include <ArduinoJson.h>
 
 TelemetryModule::TelemetryModule(ScaleDriver& scaleDriver, TimeModule& timeMod)
-    : settings(nullptr), scale(scaleDriver), timeModule(timeMod) {}
+    : settings(nullptr), scale(scaleDriver), timeModule(timeMod), lastPostTime(0) {}
 
 void TelemetryModule::begin(TerminalCLI& cli, SettingsModule& s) {
     settings = &s;
@@ -49,57 +49,79 @@ void TelemetryModule::begin(TerminalCLI& cli, SettingsModule& s) {
             delay(100);
         }
 
-        // Prepare JSON payload
-        float weight = scale.getFilteredWeight();
-        String timeStr = timeModule.getTimeString();
-        
-        String payload = "{\"timestamp\":\"" + timeStr + "\",\"weight_g\":" + String(weight, 2) + "}";
-        
-        Logger::info("Sending Payload: ");
-        Logger::info(payload.c_str());
-
-        // Send HTTP POST
-        WiFiClient client;
-        HTTPClient http;
-        http.begin(client, settings->getServerUrl());
-        http.addHeader("Content-Type", "application/json");
-
-        int httpCode = http.POST(payload);
-        if (httpCode > 0) {
-            Logger::info("Telemetry payload sent successfully. HTTP Code: ");
-            Logger::info(String(httpCode).c_str());
-
-            if (httpCode == 200) {
-                String response = http.getString();
-                JsonDocument doc;
-                DeserializationError error = deserializeJson(doc, response);
-
-                if (!error && doc["update_config"] == true) {
-                    Logger::info("Received new configuration from server!");
-                    
-                    if (!doc["config"]["telemetry"].isNull()) {
-                        bool enable = (doc["config"]["telemetry"] == "on");
-                        settings->setTelemetryEnabled(enable);
-                        Logger::info(enable ? "Telemetry updated: ON" : "Telemetry updated: OFF");
-                    }
-                    if (!doc["config"]["ntp_server"].isNull()) {
-                        const char* ntp = doc["config"]["ntp_server"];
-                        settings->setNtpServer(ntp);
-                        Logger::info("NTP Server updated.");
-                    }
-                }
-            }
-        } else {
-            Logger::error("Failed to send telemetry payload. Error: ");
-            Logger::error(http.errorToString(httpCode).c_str());
-        }
-        http.end();
-        
-        WiFi.disconnect(true);
+        postData();
     }
 
-    // Sleep for 1 hour (3600 seconds = 3600 * 1000 * 1000 microseconds)
-    // IMPORTANT: GPIO16 (D0) must be connected to RST for the ESP8266 to wake up!
-    Logger::info("Going to Deep Sleep for 1 hour... (Connect D0 to RST!)");
-    ESP.deepSleep(3600e6);
+    if (!settings->isDebugMode()) {
+        WiFi.disconnect(true);
+        long sleepInterval = settings->getSleepIntervalSec();
+        if (sleepInterval <= 0) sleepInterval = 3600;
+        Logger::info("Going to Deep Sleep for configured interval... (Connect D0 to RST!)");
+        ESP.deepSleep(sleepInterval * 1000000ULL);
+    } else {
+        Logger::info("Debug Mode ON. Staying awake to stream telemetry.");
+        lastPostTime = millis();
+    }
+}
+
+void TelemetryModule::update() {
+    if (!settings || !settings->isTelemetryEnabled() || !settings->isDebugMode()) return;
+    
+    // In debug mode, stream every 1 second
+    if (millis() - lastPostTime > 1000) {
+        lastPostTime = millis();
+        if (WiFi.status() == WL_CONNECTED) {
+            postData();
+        }
+    }
+}
+
+void TelemetryModule::postData() {
+    float weight = scale.getFilteredWeight();
+    String timeStr = timeModule.getTimeString();
+    
+    String payload = "{\"timestamp\":\"" + timeStr + "\",\"weight_g\":" + String(weight, 2) + "}";
+    
+    // Send HTTP POST
+    WiFiClient client;
+    HTTPClient http;
+    http.begin(client, settings->getServerUrl());
+    http.addHeader("Content-Type", "application/json");
+
+    int httpCode = http.POST(payload);
+    if (httpCode > 0) {
+        if (httpCode == 200) {
+            String response = http.getString();
+            JsonDocument doc;
+            DeserializationError error = deserializeJson(doc, response);
+
+            if (!error && doc["update_config"] == true) {
+                Logger::info("Received new configuration from server!");
+                
+                if (!doc["config"]["telemetry"].isNull()) {
+                    bool enable = (doc["config"]["telemetry"] == "on");
+                    settings->setTelemetryEnabled(enable);
+                    Logger::info(enable ? "Telemetry updated: ON" : "Telemetry updated: OFF");
+                }
+                if (!doc["config"]["ntp_server"].isNull()) {
+                    const char* ntp = doc["config"]["ntp_server"];
+                    settings->setNtpServer(ntp);
+                    Logger::info("NTP Server updated.");
+                }
+                if (!doc["config"]["sleep_interval_sec"].isNull()) {
+                    long sleepSec = doc["config"]["sleep_interval_sec"];
+                    settings->setSleepIntervalSec(sleepSec);
+                    Logger::info("Sleep interval updated.");
+                }
+                if (!doc["config"]["debug_mode"].isNull()) {
+                    bool debugMode = doc["config"]["debug_mode"];
+                    settings->setDebugMode(debugMode);
+                    Logger::info(debugMode ? "Debug Mode: ON" : "Debug Mode: OFF");
+                }
+            }
+        }
+    } else {
+        Logger::error("Failed to send telemetry payload.");
+    }
+    http.end();
 }

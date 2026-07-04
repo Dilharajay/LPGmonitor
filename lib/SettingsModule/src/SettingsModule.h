@@ -13,6 +13,8 @@ struct SystemSettings {
     char serverUrl[129];
     bool telemetryEnabled;
     long tareOffset;
+    long sleepIntervalSec;
+    bool debugMode;
 };
 
 class SettingsModule {
@@ -26,9 +28,13 @@ public:
     const char* getServerUrl() const { return settings.serverUrl; }
     bool isTelemetryEnabled() const { return settings.telemetryEnabled; }
     long getTareOffset() const { return settings.tareOffset; }
+    long getSleepIntervalSec() const { return settings.sleepIntervalSec; }
+    bool isDebugMode() const { return settings.debugMode; }
     
     void setTelemetryEnabled(bool enabled);
     void setTareOffset(long offset);
+    void setSleepIntervalSec(long sec);
+    void setDebugMode(bool enabled);
     void setNtpServer(const char* ntp);
     void setServerUrl(const char* url);
 

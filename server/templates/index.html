@@ -39,8 +39,18 @@
                 <div class="form-group">
                     <label>
                         <input type="checkbox" name="telemetry_enabled" {% if config.telemetry_enabled %}checked{% endif %}>
-                        Enable Telemetry (1-Hour Sleep Cycle)
+                        Enable Telemetry
                     </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="debug_mode" {% if config.debug_mode %}checked{% endif %}>
+                        Enable Debug Mode (Streaming, No Deep Sleep)
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>Sleep Interval (seconds)</label>
+                    <input type="number" name="sleep_interval_sec" value="{{ config.sleep_interval_sec }}" min="10" required style="width: 100%; padding: 8px;">
                 </div>
                 <div class="form-group">
                     <label>NTP Server</label>
@@ -50,7 +60,7 @@
             </form>
         </div>
 
-        <h2>Recent Telemetry Data</h2>
+        <h2>Recent Telemetry Data <a href="/monitor" class="badge badge-synced" style="float: right; text-decoration: none;">Open Live Monitor</a></h2>
         <table>
             <thead>
                 <tr>
