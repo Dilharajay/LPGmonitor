@@ -2,7 +2,7 @@
 #include "Logger.h"
 
 #define EEPROM_SIZE 512
-#define MAGIC_WORD "CFG1"
+#define MAGIC_WORD "CFG2"
 
 SettingsModule::SettingsModule() {
     // Defaults will be loaded in begin()
@@ -76,6 +76,9 @@ void SettingsModule::resetToDefaults() {
     settings.sleepIntervalSec = 3600;
     settings.debugMode = false;
     settings.timezoneOffsetSec = 19800; // +5:30 IST default
+    settings.fullCylinderWeight = 20000.0f;   // 20kg
+    settings.emptyCylinderWeight = 6500.0f;   // 6.5kg
+    settings.gasLeakThreshold = 700;
     
     save();
 }
@@ -147,6 +150,21 @@ void SettingsModule::setServerUrl(const char* url) {
     save();
 }
 
+void SettingsModule::setFullCylinderWeight(float w) {
+    settings.fullCylinderWeight = w;
+    save();
+}
+
+void SettingsModule::setEmptyCylinderWeight(float w) {
+    settings.emptyCylinderWeight = w;
+    save();
+}
+
+void SettingsModule::setGasLeakThreshold(int ppm) {
+    settings.gasLeakThreshold = ppm;
+    save();
+}
+
 void SettingsModule::handleSetServer(String args) {
     if (args.length() == 0) {
         Logger::warn("Usage: set_server <URL>");
@@ -188,6 +206,15 @@ void SettingsModule::handlePrintSettings(String args) {
     
     Logger::raw("Telemetry  : ");
     Logger::rawln(settings.telemetryEnabled ? "ON" : "OFF");
+    
+    Logger::raw("Full Cyl   : ");
+    Logger::rawln(String(settings.fullCylinderWeight, 0) + "g");
+    
+    Logger::raw("Empty Cyl  : ");
+    Logger::rawln(String(settings.emptyCylinderWeight, 0) + "g");
+    
+    Logger::raw("Gas Leak   : ");
+    Logger::rawln(String(settings.gasLeakThreshold) + " ppm");
     
     Logger::rawln("=======================");
 }

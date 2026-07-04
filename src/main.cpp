@@ -2,6 +2,7 @@
 #include "TerminalCLI.h"
 #include "ScaleDriver.h"
 #include "ScaleModule.h"
+#include "GasSensorModule.h"
 #include "Logger.h"
 #include "Config.h"
 #include "SettingsModule.h"
@@ -12,9 +13,10 @@
 TerminalCLI cli;
 ScaleDriver scaleDriver;
 ScaleModule scaleModule(scaleDriver);
+GasSensorModule gasSensor;
 SettingsModule settingsModule;
 TimeModule  timeModule;
-WebInterfaceModule webModule(scaleDriver, timeModule);
+WebInterfaceModule webModule(scaleDriver, gasSensor, timeModule);
 
 void setup()
 {
@@ -29,7 +31,11 @@ void setup()
     // 3. Initialize Hardware Drivers
     scaleDriver.begin(Config::HX711_DOUT_PIN, Config::HX711_SCK_PIN, Config::DEFAULT_CALIBRATION_FACTOR, settingsModule.getTareOffset());
     
-    // 4. Register Global Commands to CLI
+    // 4. Initialize Gas Sensor
+    gasSensor.begin(cli);
+    gasSensor.setLeakThreshold(settingsModule.getGasLeakThreshold());
+    
+    // 5. Register Global Commands to CLI
     cli.registerCommand("d", "Toggle debug logging output", [](String args) {
         bool newMode = !Logger::isDebugMode();
         Logger::setDebugMode(newMode);
@@ -41,14 +47,14 @@ void setup()
         Logger::info(newMode ? "Debug logging: ON" : "Debug logging: OFF");
     });
     
-    // 5. Initialize and Register Feature Modules
+    // 6. Initialize and Register Feature Modules
     scaleModule.begin(cli, settingsModule);
     timeModule.begin(cli, settingsModule);
     
-    // 6. Start CLI (prints welcome prompt and help)
-    cli.begin("\n=== System Ready ===");
+    // 7. Start CLI (prints welcome prompt and help)
+    cli.begin("\n=== Smart LPG Monitor Ready ===");
 
-    // 7. Start Web Server Interface
+    // 8. Start Web Server Interface
     webModule.begin(settingsModule, cli);
     cli.printHelp();
 }
@@ -60,6 +66,7 @@ void loop()
     
     // Update feature modules (e.g. read sensors, stream data)
     scaleModule.update();
+    gasSensor.update();
     timeModule.update();
     webModule.update();
     

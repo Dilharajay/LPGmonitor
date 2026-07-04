@@ -16,6 +16,9 @@ struct SystemSettings {
     long sleepIntervalSec;
     bool debugMode;
     long timezoneOffsetSec;
+    float fullCylinderWeight;    // Weight of a full cylinder in grams (default 20000g = 20kg)
+    float emptyCylinderWeight;   // Weight of empty cylinder shell in grams (default 6500g = 6.5kg)
+    int gasLeakThreshold;        // MQ-6 ppm threshold for leak alert (default 700)
 };
 
 class SettingsModule {
@@ -32,6 +35,9 @@ public:
     long getSleepIntervalSec() const { return settings.sleepIntervalSec; }
     bool isDebugMode() const { return settings.debugMode; }
     long getTimezoneOffsetSec() const { return settings.timezoneOffsetSec; }
+    float getFullCylinderWeight() const { return settings.fullCylinderWeight; }
+    float getEmptyCylinderWeight() const { return settings.emptyCylinderWeight; }
+    int getGasLeakThreshold() const { return settings.gasLeakThreshold; }
     
     void setTelemetryEnabled(bool enabled);
     void setTareOffset(long offset);
@@ -40,6 +46,9 @@ public:
     void setTimezoneOffsetSec(long sec);
     void setNtpServer(const char* ntp);
     void setServerUrl(const char* url);
+    void setFullCylinderWeight(float w);
+    void setEmptyCylinderWeight(float w);
+    void setGasLeakThreshold(int ppm);
 
 private:
     SystemSettings settings;
