@@ -12,6 +12,7 @@ An ESP8266-based Smart LPG (Liquefied Petroleum Gas) Cylinder Monitor. It measur
   - **Negative Rejection:** Ignores erroneous `< 0` load cell readings.
   - **Median Filter:** A 5-sample moving median window that rejects impulse noise/spikes.
   - **Exponential Moving Average (EMA):** Smooths the median output with an adjustable `alpha` for stable readings.
+- **Non-blocking Architecture:** The HX711 and MQTT modules run completely asynchronously, ensuring butter-smooth performance on the Web Interface and Serial CLI without input lag.
 - **Terminal CLI:** A modular command-line interface over Serial to easily configure WiFi, MQTT, tare the scale, or debug.
 - **NTP Time Sync:** Automatically syncs with NTP servers if an RTC module is not installed or has the wrong time.
 
@@ -41,6 +42,7 @@ Connect via Serial Monitor (115200 baud by default). Here are some useful comman
 - `set_mqtt_port <PORT>`: Set the MQTT port (default 1883).
 - `set_mqtt_user <USER>`: Set the MQTT username.
 - `set_mqtt_pwd <PASSWORD>`: Set the MQTT password.
+- `telemetry <on/off>`: Enable or disable MQTT telemetry publishing (disabled by default).
 - `web <on/off>`: Enable or disable the local web dashboard.
 - `settings`: View all current configurations.
 - `debug`: Toggle debug logging.
