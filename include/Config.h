@@ -9,6 +9,9 @@ namespace Config {
     constexpr const char* PROJECT_NAME = "Smart LPG Monitor";
     constexpr const char* PROJECT_VERSION = "1.0.0";
 
+    // LED Status Indicator
+    constexpr uint8_t LED_PIN = D4; // GPIO2 (D4 on NodeMCU)
+
     // OTA Update Settings
     constexpr const char* OTA_HOSTNAME = "SmartLPGMonitor";
     // OTA password is stored in runtime settings (SettingsModule) to avoid

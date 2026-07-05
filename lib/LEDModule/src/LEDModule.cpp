@@ -1,8 +1,9 @@
 #include "LEDModule.h"
 #include "Logger.h"
+#include "Config.h"
 
 LEDModule::LEDModule()
-    : pin(D4), mode(LEDMode::OFF), lastToggleMs(0), connectedAtMs(0), 
+    : pin(Config::LED_PIN), mode(LEDMode::OFF), lastToggleMs(0), connectedAtMs(0), 
       ledState(false), isStreaming(false) {}
 
 void LEDModule::begin(uint8_t ledPin) {
