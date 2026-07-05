@@ -39,6 +39,8 @@ void SettingsModule::begin(TerminalCLI& cli) {
         [this](String args) { this->handleSetMqttUser(args); });
     cli.registerCommand("set_mqtt_pwd", "Set MQTT Password", 
         [this](String args) { this->handleSetMqttPassword(args); });
+    cli.registerCommand("set_ota_pwd", "Set OTA password for espota/ArduinoOTA", 
+        [this](String args) { this->handleSetOtaPassword(args); });
     cli.registerCommand("settings", "View current settings", 
         [this](String args) { this->handlePrintSettings(args); });
 }
@@ -98,6 +100,8 @@ void SettingsModule::resetToDefaults() {
     settings.mqttUser[sizeof(settings.mqttUser) - 1] = '\0';
     strncpy(settings.mqttPassword, "", sizeof(settings.mqttPassword) - 1);
     settings.mqttPassword[sizeof(settings.mqttPassword) - 1] = '\0';
+    strncpy(settings.otaPassword, "", sizeof(settings.otaPassword) - 1);
+    settings.otaPassword[sizeof(settings.otaPassword) - 1] = '\0';
     
     save();
 }
@@ -212,6 +216,12 @@ void SettingsModule::setMqttPassword(const char* pwd) {
     save();
 }
 
+void SettingsModule::setOtaPassword(const char* pwd) {
+    strncpy(settings.otaPassword, pwd, sizeof(settings.otaPassword) - 1);
+    settings.otaPassword[sizeof(settings.otaPassword) - 1] = '\0';
+    save();
+}
+
 void SettingsModule::handleSetServer(String args) {
     if (args.length() == 0) {
         Logger::warn("Usage: set_server <URL>");
@@ -280,6 +290,15 @@ void SettingsModule::handleSetMqttPassword(String args) {
     }
     setMqttPassword(args.c_str());
     Logger::info("MQTT Password updated");
+}
+
+void SettingsModule::handleSetOtaPassword(String args) {
+    if (args.length() == 0) {
+        Logger::warn("Usage: set_ota_pwd <Password>");
+        return;
+    }
+    setOtaPassword(args.c_str());
+    Logger::info("OTA password updated");
 }
 
 void SettingsModule::handlePrintSettings(String args) {

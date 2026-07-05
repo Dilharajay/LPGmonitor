@@ -29,6 +29,7 @@ private:
 
     unsigned long _lastPublishMs;
     unsigned long _lastReconnectAttemptMs;
+    unsigned long _reconnectDelayMs;
 };
 
 #endif // MQTT_MODULE_H

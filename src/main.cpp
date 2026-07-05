@@ -21,6 +21,7 @@ SettingsModule settingsModule;
 TimeModule  timeModule;
 WebInterfaceModule webModule(scaleDriver, gasSensor, timeModule);
 MqttModule mqttModule(scaleDriver, gasSensor, timeModule);
+bool wifiLogged = false;
 
 void setup()
 {
@@ -32,28 +33,17 @@ void setup()
     // 2. Initialize Config and EEPROM (do this before hardware so we can read settings)
     settingsModule.begin(cli);
 
-    // 3. Connect to WiFi
-    Logger::info("Connecting to WiFi...");
+    // 3. Start WiFi (non-blocking)
+    Logger::info(F("Starting WiFi (non-blocking)..."));
     WiFi.mode(WIFI_STA);
     WiFi.disconnect();
     delay(100);
     WiFi.begin(settingsModule.getSSID(), settingsModule.getPassword());
-    int attempts = 0;
-    while (WiFi.status() != WL_CONNECTED && attempts < 30) {
-        delay(500);
-        Logger::raw(".");
-        attempts++;
-    }
-    Logger::rawln();
-    if (WiFi.status() == WL_CONNECTED) {
-        Logger::info("WiFi connected. IP: ");
-        Logger::info(WiFi.localIP().toString().c_str());
-    } else {
-        Logger::error("WiFi connection failed.");
-    }
 
     // 4. Initialize Hardware Drivers
-    scaleDriver.begin(Config::HX711_DOUT_PIN, Config::HX711_SCK_PIN, Config::DEFAULT_CALIBRATION_FACTOR, settingsModule.getTareOffset());
+    if (!scaleDriver.begin(Config::HX711_DOUT_PIN, Config::HX711_SCK_PIN, Config::DEFAULT_CALIBRATION_FACTOR, settingsModule.getTareOffset())) {
+        Logger::error(F("Scale initialization failed. Continuing in degraded mode."));
+    }
     
     // 5. Initialize Gas Sensor
     gasSensor.begin(cli);
@@ -63,7 +53,7 @@ void setup()
     cli.registerCommand("debug", "Toggle debug logging output", [](String args) {
         bool newMode = !Logger::isDebugMode();
         Logger::setDebugMode(newMode);
-        Logger::info(newMode ? "Debug logging: ON" : "Debug logging: OFF");
+        Logger::info(newMode ? F("Debug logging: ON") : F("Debug logging: OFF"));
     });
     
     // 7. Initialize and Register Feature Modules
@@ -76,10 +66,10 @@ void setup()
 
     // 9. Start Web Server Interface (if enabled)
     if (settingsModule.isWebInterfaceEnabled()) {
-        Logger::info("Web Interface is ENABLED. Starting web server...");
+        Logger::info(F("Web Interface is ENABLED. Starting web server..."));
         webModule.begin(settingsModule, cli);
     } else {
-        Logger::info("Web Interface is DISABLED.");
+        Logger::info(F("Web Interface is DISABLED."));
     }
     
     cli.printHelp();
@@ -87,7 +77,7 @@ void setup()
     // 10. Initialize OTA Updates
     OTA::begin(
         Config::OTA_HOSTNAME,
-        Config::OTA_PASSWORD
+        settingsModule.getOtaPassword()
     );
 }
 
@@ -101,6 +91,13 @@ void loop()
     gasSensor.update();
     timeModule.update();
     mqttModule.update();
+
+    // Log WiFi connection once when established
+    if (!wifiLogged && WiFi.status() == WL_CONNECTED) {
+        wifiLogged = true;
+        Logger::info(F("WiFi connected. IP: "));
+        Logger::info(WiFi.localIP().toString().c_str());
+    }
     
     if (settingsModule.isWebInterfaceEnabled()) {
         webModule.update();

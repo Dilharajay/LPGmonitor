@@ -54,3 +54,23 @@ This project is built using [PlatformIO](https://platformio.org/).
 ```bash
 pio run -e nodemcuv2 -t upload
 ```
+
+## Setup & Secrets
+
+- WiFi and MQTT credentials are stored in device EEPROM and can be set via the Serial CLI after first boot. Recommended workflow:
+  - Open Serial Monitor at `115200` and use commands like `set_ssid`, `set_pwd`, `set_mqtt_broker`, `set_mqtt_user`, and `set_mqtt_pwd`.
+  - Example: `set_ssid MyNetwork` then `set_pwd MyPassword`
+
+- OTA password is intentionally not stored in source. Configure the device OTA password using the CLI:
+  - `set_ota_pwd <password>` — this stores the password in EEPROM and is used by the built-in ArduinoOTA/espota server.
+  - To upload from your machine with authentication, do not add the password to the repository. Instead run PlatformIO with an upload flag, for example:
+
+```bash
+pio run -e nodemcuv2 -t upload --upload-port 192.168.1.102 --upload-flag="--auth=YOUR_OTA_PASSWORD"
+```
+
+- For CI or local overrides, create a non-committed `platformio_override.ini` (or pass `--upload-flag`) rather than committing secrets to the repo.
+
+## Notes on Behavior
+- WiFi startup is non-blocking: the firmware will attempt to connect in the background so other services (CLI, OTA, web UI) remain available.
+- If the HX711 sensor is not detected at boot the device will continue in a degraded mode (no hard halt) so you can still access OTA and CLI for troubleshooting.

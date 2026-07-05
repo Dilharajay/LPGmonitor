@@ -11,7 +11,8 @@ namespace Config {
 
     // OTA Update Settings
     constexpr const char* OTA_HOSTNAME = "SmartLPGMonitor";
-    constexpr const char* OTA_PASSWORD = "lpg123";
+    // OTA password is stored in runtime settings (SettingsModule) to avoid
+    // hardcoding secrets in source. Configure via the CLI `set_ota_pwd`.
     // ── Hardware Pins ──
     constexpr uint8_t HX711_DOUT_PIN = D2; // GPIO4 (D2 on NodeMCU)
     constexpr uint8_t HX711_SCK_PIN  = D1; // GPIO5 (D1 on NodeMCU)

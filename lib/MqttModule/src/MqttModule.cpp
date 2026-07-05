@@ -1,7 +1,7 @@
 #include "MqttModule.h"
 
 MqttModule::MqttModule(ScaleDriver& scale, GasSensorModule& gasSensor, TimeModule& time)
-    : _scale(scale), _gasSensor(gasSensor), _time(time), _settings(nullptr), _lastPublishMs(0), _lastReconnectAttemptMs(0) {
+    : _scale(scale), _gasSensor(gasSensor), _time(time), _settings(nullptr), _lastPublishMs(0), _lastReconnectAttemptMs(0), _reconnectDelayMs(2000) {
 }
 
 void MqttModule::begin(SettingsModule& settings) {
@@ -17,8 +17,7 @@ void MqttModule::update() {
 
     if (!_client.connected()) {
         unsigned long now = millis();
-        // Wait 5 seconds before retrying
-        if (now - _lastReconnectAttemptMs > 5000) {
+        if (now - _lastReconnectAttemptMs > _reconnectDelayMs) {
             _lastReconnectAttemptMs = now;
             reconnect();
         }
@@ -47,6 +46,10 @@ void MqttModule::reconnect() {
         
         if (connected) {
             // connected successfully
+            _reconnectDelayMs = 2000; // reset backoff on success
+        } else {
+            // increase delay with cap and small jitter
+            _reconnectDelayMs = min(60000UL, _reconnectDelayMs * 2 + (random(0, 1000)));
         }
     }
 }

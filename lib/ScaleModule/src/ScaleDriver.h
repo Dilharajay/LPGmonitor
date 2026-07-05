@@ -10,7 +10,8 @@ public:
     ScaleDriver();
     
     // Initialize the HX711 and perform initial tare (or restore offset)
-    void begin(uint8_t doutPin, uint8_t sckPin, float calFactor, long savedOffset = 0);
+    // Returns true on success, false on error (hardware not found)
+    bool begin(uint8_t doutPin, uint8_t sckPin, float calFactor, long savedOffset = 0);
     
     // Commands
     long performTare();
