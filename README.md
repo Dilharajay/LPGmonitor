@@ -74,3 +74,13 @@ pio run -e nodemcuv2 -t upload --upload-port 192.168.1.102 --upload-flag="--auth
 ## Notes on Behavior
 - WiFi startup is non-blocking: the firmware will attempt to connect in the background so other services (CLI, OTA, web UI) remain available.
 - If the HX711 sensor is not detected at boot the device will continue in a degraded mode (no hard halt) so you can still access OTA and CLI for troubleshooting.
+
+## Memory Optimizations
+
+This firmware implements several memory management best practices for constrained ESP8266 environments:
+
+- **Flash String Storage (`F()` macro):** All constant string literals in logging and CLI are wrapped with the `F()` macro to store them in flash memory instead of RAM. This significantly reduces heap fragmentation and preserves RAM for runtime data and buffers.
+- **Non-blocking WiFi:** The WiFi connection attempt in `setup()` is non-blocking with asynchronous status checking in `loop()`, preventing long delays that would block other essential tasks.
+- **MQTT Backoff:** Implements exponential backoff with jitter for failed MQTT reconnection attempts, reducing network thrashing and improving graceful degradation.
+- **Efficient Filtering:** The scale driver uses a compact median buffer (configurable window size) and EMA smoothing without unnecessary dynamic allocations.
+- **Sensor Degradation:** If hardware (HX711, RTC) fails to initialize, the system continues in degraded mode instead of halting, allowing OTA updates and CLI access for troubleshooting.

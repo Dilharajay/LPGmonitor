@@ -7,35 +7,35 @@ GasSensorModule::GasSensorModule() :
 
 void GasSensorModule::begin(TerminalCLI& cli) {
     pinMode(A0, INPUT);
-    Logger::info("GasSensorModule: MQ-6 sensor initialized on A0");
+    Logger::info(F("GasSensorModule: MQ-6 sensor initialized on A0"));
 
     cli.registerCommand("gas", "Show current gas sensor PPM and raw value",
                         [this](String args) {
-        Logger::raw("Gas PPM: ");
+        Logger::raw(F("Gas PPM: "));
         Logger::raw(ppmValue);
-        Logger::raw("  Raw: ");
+        Logger::raw(F("  Raw: "));
         Logger::rawln(rawValue);
         if (isLeakDetected()) {
-            Logger::warn("!! GAS LEAK DETECTED !!");
+            Logger::warn(F("!! GAS LEAK DETECTED !!"));
         }
     });
 
     cli.registerCommand("gas_threshold", "Set gas leak threshold PPM (e.g., gas_threshold 800)",
                         [this](String args) {
         if (args.length() == 0) {
-            Logger::raw("Current threshold: ");
+            Logger::raw(F("Current threshold: "));
             Logger::raw(leakThreshold);
-            Logger::rawln(" ppm");
+            Logger::rawln(F(" ppm"));
             return;
         }
         int val = args.toInt();
         if (val > 0) {
             leakThreshold = val;
-            Logger::raw("Leak threshold set to ");
+            Logger::raw(F("Leak threshold set to "));
             Logger::raw(leakThreshold);
-            Logger::rawln(" ppm");
+            Logger::rawln(F(" ppm"));
         } else {
-            Logger::warn("Invalid threshold value");
+            Logger::warn(F("Invalid threshold value"));
         }
     });
 }

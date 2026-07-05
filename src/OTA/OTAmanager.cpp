@@ -17,28 +17,28 @@ void begin(const char* hostname,
 
     ArduinoOTA.onStart([]()
     {
-        Logger::info("OTA Update Started");
+        Logger::info(F("OTA Update Started"));
     });
 
     ArduinoOTA.onEnd([]()
     {
-        Logger::info("OTA Update Finished");
+        Logger::info(F("OTA Update Finished"));
     });
 
     ArduinoOTA.onProgress([](unsigned int progress,
                              unsigned int total)
     {
-        Logger::info("OTA Progress: " + String(progress) + "/" + String(total));
+        Logger::info(F("OTA Progress: ") + String(progress) + F("/") + String(total));
     });
 
     ArduinoOTA.onError([](ota_error_t error)
     {
-        Logger::error("OTA Error: " + String(error));
+        Logger::error(F("OTA Error: ") + String(error));
     });
 
     ArduinoOTA.begin();
 
-    Logger::info("OTA Ready. Hostname: " + String(hostname));
+    Logger::info(F("OTA Ready. Hostname: ") + String(hostname));
 }
 
 void loop()

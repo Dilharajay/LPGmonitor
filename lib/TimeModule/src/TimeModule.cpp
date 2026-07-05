@@ -12,13 +12,13 @@ void TimeModule::begin(TerminalCLI& cli, SettingsModule& s) {
     
     // Initialize DS1307
     if (!rtc.begin()) {
-        Logger::error("Couldn't find RTC DS1307");
+        Logger::error(F("Couldn't find RTC DS1307"));
         rtcFound = false;
     } else {
         rtcFound = true;
-        Logger::info("RTC DS1307 initialized successfully");
+        Logger::info(F("RTC DS1307 initialized successfully"));
         if (!rtc.isrunning()) {
-            Logger::warn("RTC is NOT running, let's set the time!");
+            Logger::warn(F("RTC is NOT running, let's set the time!"));
         }
     }
 
@@ -42,10 +42,10 @@ void TimeModule::begin(TerminalCLI& cli, SettingsModule& s) {
     }
 
     if (needsSync) {
-        Logger::info("Time is not set. Syncing with NTP...");
+        Logger::info(F("Time is not set. Syncing with NTP..."));
         syncWithNTP();
     } else {
-        Logger::info("RTC time looks valid. Skipping NTP sync.");
+        Logger::info(F("RTC time looks valid. Skipping NTP sync."));
     }
 }
 
@@ -54,8 +54,8 @@ void TimeModule::update() {
 }
 
 void TimeModule::syncWithNTP() {
-    Logger::info("Connecting to WiFi for NTP sync...");
-    Logger::debug("SSID: ");
+    Logger::info(F("Connecting to WiFi for NTP sync..."));
+    Logger::debug(F("SSID: "));
     Logger::debug(settings->getSSID());
 
     // Start WiFi connection
@@ -64,21 +64,21 @@ void TimeModule::syncWithNTP() {
     int attempts = 0;
     while (WiFi.status() != WL_CONNECTED && attempts < 20) {
         delay(500);
-        Logger::raw(".");
+        Logger::raw(F("."));
         attempts++;
     }
     Logger::rawln();
 
     if (WiFi.status() != WL_CONNECTED) {
-        Logger::error("Failed to connect to WiFi. NTP sync aborted.");
+        Logger::error(F("Failed to connect to WiFi. NTP sync aborted."));
         return;
     }
 
-    Logger::info("WiFi connected. IP: ");
+    Logger::info(F("WiFi connected. IP: "));
     Logger::info(WiFi.localIP().toString().c_str());
     
     // Setup NTP
-    Logger::info("Requesting time from NTP server...");
+    Logger::info(F("Requesting time from NTP server..."));
     configTime(settings->getTimezoneOffsetSec(), Config::DAYLIGHT_OFFSET_SEC, settings->getNtpServer());
 
     // Wait for time to be set
@@ -86,14 +86,14 @@ void TimeModule::syncWithNTP() {
     attempts = 0;
     while (now < 24 * 3600 && attempts < 20) {
         delay(500);
-        Logger::raw(".");
+        Logger::raw(F("."));
         now = time(nullptr);
         attempts++;
     }
     Logger::rawln();
 
     if (now < 24 * 3600) {
-        Logger::error("Failed to get time from NTP server.");
+        Logger::error(F("Failed to get time from NTP server."));
     } else {
         struct tm timeinfo;
         localtime_r(&now, &timeinfo); // Use local time for RTC

@@ -13,9 +13,9 @@ void SettingsModule::begin(TerminalCLI& cli) {
     
     if (isInitialized()) {
         load();
-        Logger::info("Settings loaded from EEPROM.");
+        Logger::info(F("Settings loaded from EEPROM."));
     } else {
-        Logger::warn("EEPROM not initialized. Resetting to defaults.");
+        Logger::warn(F("EEPROM not initialized. Resetting to defaults."));
         resetToDefaults();
     }
 
@@ -66,7 +66,7 @@ void SettingsModule::save() {
         EEPROM.write(i, ptr[i]);
     }
     EEPROM.commit();
-    Logger::info("Settings saved to EEPROM.");
+    Logger::info(F("Settings saved to EEPROM."));
 }
 
 void SettingsModule::resetToDefaults() {
@@ -108,7 +108,7 @@ void SettingsModule::resetToDefaults() {
 
 void SettingsModule::handleSetSSID(String args) {
     if (args.length() == 0) {
-        Logger::warn("Usage: set_ssid <SSID>");
+        Logger::warn(F("Usage: set_ssid <SSID>"));
         return;
     }
     strncpy(settings.ssid, args.c_str(), sizeof(settings.ssid) - 1);
@@ -118,7 +118,7 @@ void SettingsModule::handleSetSSID(String args) {
 
 void SettingsModule::handleSetPassword(String args) {
     if (args.length() == 0) {
-        Logger::warn("Usage: set_pwd <Password>");
+        Logger::warn(F("Usage: set_pwd <Password>"));
         return;
     }
     strncpy(settings.password, args.c_str(), sizeof(settings.password) - 1);
@@ -128,7 +128,7 @@ void SettingsModule::handleSetPassword(String args) {
 
 void SettingsModule::handleSetNTP(String args) {
     if (args.length() == 0) {
-        Logger::warn("Usage: set_ntp <Server>");
+        Logger::warn(F("Usage: set_ntp <Server>"));
         return;
     }
     strncpy(settings.ntpServer, args.c_str(), sizeof(settings.ntpServer) - 1);
@@ -224,7 +224,7 @@ void SettingsModule::setOtaPassword(const char* pwd) {
 
 void SettingsModule::handleSetServer(String args) {
     if (args.length() == 0) {
-        Logger::warn("Usage: set_server <URL>");
+        Logger::warn(F("Usage: set_server <URL>"));
         return;
     }
     strncpy(settings.serverUrl, args.c_str(), sizeof(settings.serverUrl) - 1);
@@ -235,112 +235,112 @@ void SettingsModule::handleSetServer(String args) {
 void SettingsModule::handleTelemetry(String args) {
     if (args == "on") {
         setTelemetryEnabled(true);
-        Logger::info("Telemetry Enabled! Will deep sleep and post data automatically.");
+        Logger::info(F("Telemetry Enabled! Will deep sleep and post data automatically."));
     } else if (args == "off") {
         setTelemetryEnabled(false);
-        Logger::info("Telemetry Disabled!");
+        Logger::info(F("Telemetry Disabled!"));
     } else {
-        Logger::warn("Usage: telemetry <on/off>");
+        Logger::warn(F("Usage: telemetry <on/off>"));
     }
 }
 
 void SettingsModule::handleWebCommand(String args) {
     if (args == "on") {
         setWebInterfaceEnabled(true);
-        Logger::info("Web Interface Enabled!");
+        Logger::info(F("Web Interface Enabled!"));
     } else if (args == "off") {
         setWebInterfaceEnabled(false);
-        Logger::info("Web Interface Disabled!");
+        Logger::info(F("Web Interface Disabled!"));
     } else {
-        Logger::warn("Usage: web <on/off>");
+        Logger::warn(F("Usage: web <on/off>"));
     }
 }
 
 void SettingsModule::handleSetMqttBroker(String args) {
     if (args.length() == 0) {
-        Logger::warn("Usage: set_mqtt_broker <Broker>");
+        Logger::warn(F("Usage: set_mqtt_broker <Broker>"));
         return;
     }
     setMqttBroker(args.c_str());
-    Logger::info("MQTT Broker updated");
+    Logger::info(F("MQTT Broker updated"));
 }
 
 void SettingsModule::handleSetMqttPort(String args) {
     if (args.length() == 0) {
-        Logger::warn("Usage: set_mqtt_port <Port>");
+        Logger::warn(F("Usage: set_mqtt_port <Port>"));
         return;
     }
     setMqttPort(args.toInt());
-    Logger::info("MQTT Port updated");
+    Logger::info(F("MQTT Port updated"));
 }
 
 void SettingsModule::handleSetMqttUser(String args) {
     if (args.length() == 0) {
-        Logger::warn("Usage: set_mqtt_user <User>");
+        Logger::warn(F("Usage: set_mqtt_user <User>"));
         return;
     }
     setMqttUser(args.c_str());
-    Logger::info("MQTT User updated");
+    Logger::info(F("MQTT User updated"));
 }
 
 void SettingsModule::handleSetMqttPassword(String args) {
     if (args.length() == 0) {
-        Logger::warn("Usage: set_mqtt_pwd <Password>");
+        Logger::warn(F("Usage: set_mqtt_pwd <Password>"));
         return;
     }
     setMqttPassword(args.c_str());
-    Logger::info("MQTT Password updated");
+    Logger::info(F("MQTT Password updated"));
 }
 
 void SettingsModule::handleSetOtaPassword(String args) {
     if (args.length() == 0) {
-        Logger::warn("Usage: set_ota_pwd <Password>");
+        Logger::warn(F("Usage: set_ota_pwd <Password>"));
         return;
     }
     setOtaPassword(args.c_str());
-    Logger::info("OTA password updated");
+    Logger::info(F("OTA password updated"));
 }
 
 void SettingsModule::handlePrintSettings(String args) {
-    Logger::rawln("=== System Settings ===");
+    Logger::rawln(F("=== System Settings ==="));
     
-    Logger::raw("SSID       : ");
+    Logger::raw(F("SSID       : "));
     Logger::rawln(settings.ssid);
     
-    Logger::raw("Password   : ");
+    Logger::raw(F("Password   : "));
     // Optional: Hide password for security, but we'll show it or mask it
-    Logger::rawln("********"); // masked for security, or show it? Let's show it since it's a dev cli
+    Logger::rawln(F("********")); // masked for security, or show it? Let's show it since it's a dev cli
     //Logger::rawln(settings.password);
     
-    Logger::raw("NTP Server : ");
+    Logger::raw(F("NTP Server : "));
     Logger::rawln(settings.ntpServer);
     
-    Logger::raw("Server URL : ");
+    Logger::raw(F("Server URL : "));
     Logger::rawln(settings.serverUrl);
     
-    Logger::raw("Telemetry  : ");
+    Logger::raw(F("Telemetry  : "));
     Logger::rawln(settings.telemetryEnabled ? "ON" : "OFF");
     
-    Logger::raw("Full Cyl   : ");
+    Logger::raw(F("Full Cyl   : "));
     Logger::rawln(String(settings.fullCylinderWeight, 0) + "g");
     
-    Logger::raw("Empty Cyl  : ");
+    Logger::raw(F("Empty Cyl  : "));
     Logger::rawln(String(settings.emptyCylinderWeight, 0) + "g");
     
-    Logger::raw("Gas Leak   : ");
+    Logger::raw(F("Gas Leak   : "));
     Logger::rawln(String(settings.gasLeakThreshold) + " ppm");
     
-    Logger::raw("Web UI     : ");
+    Logger::raw(F("Web UI     : "));
     Logger::rawln(settings.webInterfaceEnabled ? "ON" : "OFF");
 
-    Logger::raw("MQTT Broker: ");
+    Logger::raw(F("MQTT Broker: "));
     Logger::rawln(settings.mqttBroker);
 
-    Logger::raw("MQTT Port  : ");
+    Logger::raw(F("MQTT Port  : "));
     Logger::rawln(String(settings.mqttPort));
 
-    Logger::raw("MQTT User  : ");
+    Logger::raw(F("MQTT User  : "));
     Logger::rawln(settings.mqttUser);
     
-    Logger::rawln("=======================");
+    Logger::rawln(F("======================="));
 }
