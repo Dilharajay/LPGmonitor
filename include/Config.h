@@ -4,6 +4,14 @@
 #include <Arduino.h>
 
 namespace Config {
+
+    // Project info
+    constexpr const char* PROJECT_NAME = "Smart LPG Monitor";
+    constexpr const char* PROJECT_VERSION = "1.0.0";
+
+    // OTA Update Settings
+    constexpr const char* OTA_HOSTNAME = "SmartLPGMonitor";
+    constexpr const char* OTA_PASSWORD = "lpg123";
     // ── Hardware Pins ──
     constexpr uint8_t HX711_DOUT_PIN = D2; // GPIO4 (D2 on NodeMCU)
     constexpr uint8_t HX711_SCK_PIN  = D1; // GPIO5 (D1 on NodeMCU)

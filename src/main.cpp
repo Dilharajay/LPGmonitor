@@ -10,6 +10,7 @@
 #include "TimeModule.h"
 #include "WebInterfaceModule.h"
 #include "MqttModule.h"
+#include "OTA/OTAmanager.h"
 
 // ── Global Modules ─────────────────────────────────────────────────
 TerminalCLI cli;
@@ -82,6 +83,12 @@ void setup()
     }
     
     cli.printHelp();
+
+    // 10. Initialize OTA Updates
+    OTA::begin(
+        Config::OTA_HOSTNAME,
+        Config::OTA_PASSWORD
+    );
 }
 
 void loop()
@@ -101,4 +108,7 @@ void loop()
     
     // Yield to ESP8266 background tasks
     delay(10);
+
+    // Handle OTA updates
+    OTA::loop();
 }
