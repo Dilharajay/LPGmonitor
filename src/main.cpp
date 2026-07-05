@@ -14,7 +14,7 @@
 #include "LEDModule.h"
 #include "WifiWorker/WifiWorker.h"
 
-// ── Global Modules ─────────────────────────────────────────────────
+// Global Modules 
 TerminalCLI cli;
 ScaleDriver scaleDriver;
 ScaleModule scaleModule(scaleDriver);
@@ -68,11 +68,11 @@ void setup()
     scaleModule.begin(cli, settingsModule);
     timeModule.begin(cli, settingsModule);
     mqttModule.begin(settingsModule);
-    
-    // 8. Start CLI (prints welcome prompt and help)
+
+    // 9. Start CLI (prints welcome prompt and help)
     cli.begin("\n=== Smart LPG Monitor Ready ===");
 
-    // 9. Start Web Server Interface (if enabled)
+    // 10. Start Web Server Interface (if enabled)
     if (settingsModule.isWebInterfaceEnabled()) {
         Logger::info(F("Web Interface is ENABLED. Starting web server..."));
         webModule.begin(settingsModule, cli);
@@ -80,7 +80,7 @@ void setup()
         Logger::info(F("Web Interface is DISABLED."));
     }
 
-    // 10. Initialize OTA Updates
+    // 11. Initialize OTA Updates
     Logger::info(F("Initializing OTA updates..."));
     OTA::begin(
         Config::OTA_HOSTNAME,
