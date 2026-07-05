@@ -12,14 +12,20 @@
 #include "MqttModule.h"
 #include "OTA/OTAmanager.h"
 #include "LEDModule.h"
+#include "WifiWorker/WifiWorker.h"
 
 // ── Global Modules ─────────────────────────────────────────────────
 TerminalCLI cli;
 ScaleDriver scaleDriver;
 ScaleModule scaleModule(scaleDriver);
 GasSensorModule gasSensor;
+
 SettingsModule settingsModule;
 TimeModule  timeModule;
+
+WiFiWorker wifiWorker;
+ 
+// fix: shared context for web and mqtt modules to avoid multiple instances of ScaleDriver, GasSensorModule, and TimeModule
 WebInterfaceModule webModule(scaleDriver, gasSensor, timeModule);
 MqttModule mqttModule(scaleDriver, gasSensor, timeModule);
 LEDModule ledModule;
@@ -36,22 +42,18 @@ void setup()
     settingsModule.begin(cli);
 
     // 3. Start WiFi (non-blocking)
-    Logger::info(F("Starting WiFi (non-blocking)..."));
-    WiFi.mode(WIFI_STA);
-    WiFi.disconnect();
-    delay(100);
-    WiFi.begin(settingsModule.getSSID(), settingsModule.getPassword());
-
+    wifiWorker.begin(settingsModule.getSSID(), settingsModule.getPassword());
+    Logger::info(F("Attempting WiFi connection..."));
+    wifiWorker.connect();
+    
     // 4. Initialize Hardware Drivers
+    Logger::info(F("Initializing HX711..."));
     if (!scaleDriver.begin(Config::HX711_DOUT_PIN, Config::HX711_SCK_PIN, Config::DEFAULT_CALIBRATION_FACTOR, settingsModule.getTareOffset())) {
         Logger::error(F("Scale initialization failed. Continuing in degraded mode."));
     }
     
-    // 4.5. Initialize LED Status Indicator
-    ledModule.begin();
-    ledModule.setMode(LEDMode::CONNECTING);
-    
     // 5. Initialize Gas Sensor
+    Logger::info(F("Initializing Gas Sensor..."));
     gasSensor.begin(cli);
     gasSensor.setLeakThreshold(settingsModule.getGasLeakThreshold());
     
@@ -77,15 +79,18 @@ void setup()
     } else {
         Logger::info(F("Web Interface is DISABLED."));
     }
-    
-    cli.printHelp();
 
     // 10. Initialize OTA Updates
+    Logger::info(F("Initializing OTA updates..."));
     OTA::begin(
         Config::OTA_HOSTNAME,
         settingsModule.getOtaPassword()
     );
+
+    cli.printHelp();
 }
+
+uint32_t lastWebUpdateMs = 0;
 
 void loop()
 {
@@ -114,12 +119,16 @@ void loop()
     }
     
     if (settingsModule.isWebInterfaceEnabled()) {
-        webModule.update();
+        uint32_t now = millis();
+        if (now - lastWebUpdateMs >= Config::WEB_UPDATE_INTERVAL_MS) {
+            webModule.update();
+            lastWebUpdateMs = now;
+        }
     }
-    
-    // Yield to ESP8266 background tasks
-    delay(10);
 
-    // Handle OTA updates
+     // Handle OTA updates
     OTA::loop();
+
+    // Yield to ESP8266 background tasks
+    yield();
 }

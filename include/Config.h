@@ -9,6 +9,9 @@ namespace Config {
     constexpr const char* PROJECT_NAME = "Smart LPG Monitor";
     constexpr const char* PROJECT_VERSION = "1.0.0";
 
+    // WEB and MQTT default settings
+    constexpr uint32_t WEB_UPDATE_INTERVAL_MS = 1000; // Update web interface every second
+
     // LED Status Indicator
     constexpr uint8_t LED_PIN = D4; // GPIO2 (D4 on NodeMCU)
 
