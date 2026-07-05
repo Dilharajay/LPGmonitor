@@ -8,6 +8,10 @@ An ESP8266-based Smart LPG (Liquefied Petroleum Gas) Cylinder Monitor. It measur
 - **Gas Leak Detection:** Uses an MQ-6 sensor to detect LPG gas leaks and trigger alerts in ppm.
 - **Home Assistant Integration:** Default data output is via MQTT, publishing telemetry every 30 seconds for easy integration into Home Assistant or other smart home platforms.
 - **Local Web Dashboard:** A responsive, dark-themed UI hosted directly on the ESP8266 showing circular gauges for gas level, leak status, and live logs. Can be toggled on/off to save resources.
+- **LED Status Indicator:** Built-in LED (D4) shows WiFi and data streaming status:
+  - **Blinking (slow):** WiFi is attempting to connect
+  - **Solid ON (5 sec):** WiFi connection established
+  - **Blinking (fast):** Data streaming in progress
 - **Advanced Filtering Pipeline:**
   - **Negative Rejection:** Ignores erroneous `< 0` load cell readings.
   - **Median Filter:** A 5-sample moving median window that rejects impulse noise/spikes.
@@ -74,6 +78,18 @@ pio run -e nodemcuv2 -t upload --upload-port 192.168.1.102 --upload-flag="--auth
 ## Notes on Behavior
 - WiFi startup is non-blocking: the firmware will attempt to connect in the background so other services (CLI, OTA, web UI) remain available.
 - If the HX711 sensor is not detected at boot the device will continue in a degraded mode (no hard halt) so you can still access OTA and CLI for troubleshooting.
+
+## LED Status Indicator (D4)
+
+The built-in LED on D4 provides visual feedback on system state:
+
+- **OFF:** No WiFi or error state
+- **CONNECTING (slow blink 600ms):** WiFi connection attempt in progress
+- **CONNECTED (solid on 5s):** WiFi successfully connected; LED stays on for 5 seconds then turns off
+- **STREAMING (fast blink 200ms):** Data streaming via scale or sensors (highest priority)
+- **ERROR (very fast blink 100ms):** Error condition (reserved for future use)
+
+LED modes update automatically based on WiFi status and data streaming state. The LED provides real-time status without needing serial console access.
 
 ## Memory Optimizations
 

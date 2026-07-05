@@ -11,6 +11,7 @@
 #include "WebInterfaceModule.h"
 #include "MqttModule.h"
 #include "OTA/OTAmanager.h"
+#include "LEDModule.h"
 
 // ── Global Modules ─────────────────────────────────────────────────
 TerminalCLI cli;
@@ -21,6 +22,7 @@ SettingsModule settingsModule;
 TimeModule  timeModule;
 WebInterfaceModule webModule(scaleDriver, gasSensor, timeModule);
 MqttModule mqttModule(scaleDriver, gasSensor, timeModule);
+LEDModule ledModule;
 bool wifiLogged = false;
 
 void setup()
@@ -44,6 +46,10 @@ void setup()
     if (!scaleDriver.begin(Config::HX711_DOUT_PIN, Config::HX711_SCK_PIN, Config::DEFAULT_CALIBRATION_FACTOR, settingsModule.getTareOffset())) {
         Logger::error(F("Scale initialization failed. Continuing in degraded mode."));
     }
+    
+    // 4.5. Initialize LED Status Indicator
+    ledModule.begin();
+    ledModule.setMode(LEDMode::CONNECTING);
     
     // 5. Initialize Gas Sensor
     gasSensor.begin(cli);
@@ -91,6 +97,14 @@ void loop()
     gasSensor.update();
     timeModule.update();
     mqttModule.update();
+
+    // Update LED status based on WiFi and streaming state
+    if (scaleModule.isStreaming()) {
+        ledModule.setStreaming(true);
+    } else {
+        ledModule.setStreaming(false);
+    }
+    ledModule.update();
 
     // Log WiFi connection once when established
     if (!wifiLogged && WiFi.status() == WL_CONNECTED) {

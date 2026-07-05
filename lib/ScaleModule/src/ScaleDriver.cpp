@@ -19,9 +19,7 @@ bool ScaleDriver::begin(uint8_t doutPin, uint8_t sckPin, float calFactor, long s
     scale.begin(doutPin, sckPin);
     calibrationFactor = calFactor;
 
-    Logger::debug(F("HX711 Started"));
-    Logger::info(F("Remove all weight..."));
-    delay(3000);
+    Logger::debug(F("HX711 driver initialized."));
 
     Logger::debug(F("Checking HX711 connection..."));
 

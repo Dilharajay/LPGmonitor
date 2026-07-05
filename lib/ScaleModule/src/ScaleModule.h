@@ -13,6 +13,9 @@ public:
     // Registers scale commands to the provided CLI
     void begin(TerminalCLI& cli, SettingsModule& settings);
     
+    // Getter for current streaming state (for LED indicator)
+    bool isStreaming() const { return isStreamingData; }
+    
     // To be called in loop() - updates the driver and handles streaming output
     void update();
 
