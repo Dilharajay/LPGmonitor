@@ -88,46 +88,51 @@ void TelegramModule::update() {
         }
     }
 
-    // Handle incoming messages
-    int numNewMessages = bot->getUpdates(bot->last_message_received + 1);
-    while (numNewMessages) {
-        for (int i = 0; i < numNewMessages; i++) {
-            lastMessage = bot->messages[i].text;
-            lastChatId = bot->messages[i].chat_id;
+    // Handle incoming messages - rate limit to check every 3 seconds to prevent HTTPS OOM crashes
+    static unsigned long _lastTelegramPollMs = 0;
+    if (now - _lastTelegramPollMs > 3000) {
+        _lastTelegramPollMs = now;
+        
+        int numNewMessages = bot->getUpdates(bot->last_message_received + 1);
+        while (numNewMessages) {
+            for (int i = 0; i < numNewMessages; i++) {
+                lastMessage = bot->messages[i].text;
+                lastChatId = bot->messages[i].chat_id;
 
-            Logger::info(F("Received message: ") + lastMessage);
+                Logger::info(F("Received message: ") + lastMessage);
 
-            if (lastMessage == "/start") {
-                sendMessageToChat(lastChatId, "ESP8266 Gas Monitor Bot Online.\nSend /help for commands.");
+                if (lastMessage == "/start") {
+                    sendMessageToChat(lastChatId, "ESP8266 Gas Monitor Bot Online.\nSend /help for commands.");
+                }
+                else if (lastMessage == "/status") {
+                    String msg = "📊 <b>System Status</b>\n\n";
+                    msg += "Time: " + _time.getTimeString() + "\n";
+                    msg += "WiFi: Connected\n";
+                    msg += "Leak Status: " + String(_gasSensor.isLeakDetected() ? "LEAK" : "Normal") + "\n";
+                    bot->sendMessage(lastChatId, msg, "HTML");
+                }
+                else if (lastMessage == "/gaslevel") {
+                    float level = getGasPercentage();
+                    float weight = _scale.getFilteredWeight();
+                    String msg = "🛢️ <b>Gas Level</b>\n\n";
+                    msg += "Remaining: " + String(level, 1) + "%\n";
+                    msg += "Current Weight: " + String(weight / 1000.0f, 3) + " kg\n";
+                    bot->sendMessage(lastChatId, msg, "HTML");
+                }
+                else if (lastMessage == "/ping") {
+                    sendMessageToChat(lastChatId, "pong");
+                }
+                else if (lastMessage == "/help") {
+                    String msg = "Available commands:\n";
+                    msg += "/status - Check system status\n";
+                    msg += "/gaslevel - Check remaining gas percentage\n";
+                    msg += "/ping - Check if bot is responsive\n";
+                    msg += "/help - Show this menu\n";
+                    sendMessageToChat(lastChatId, msg);
+                }
             }
-            else if (lastMessage == "/status") {
-                String msg = "📊 <b>System Status</b>\n\n";
-                msg += "Time: " + _time.getTimeString() + "\n";
-                msg += "WiFi: Connected\n";
-                msg += "Leak Status: " + String(_gasSensor.isLeakDetected() ? "LEAK" : "Normal") + "\n";
-                bot->sendMessage(lastChatId, msg, "HTML");
-            }
-            else if (lastMessage == "/gaslevel") {
-                float level = getGasPercentage();
-                float weight = _scale.getFilteredWeight();
-                String msg = "🛢️ <b>Gas Level</b>\n\n";
-                msg += "Remaining: " + String(level, 1) + "%\n";
-                msg += "Current Weight: " + String(weight / 1000.0f, 3) + " kg\n";
-                bot->sendMessage(lastChatId, msg, "HTML");
-            }
-            else if (lastMessage == "/ping") {
-                sendMessageToChat(lastChatId, "pong");
-            }
-            else if (lastMessage == "/help") {
-                String msg = "Available commands:\n";
-                msg += "/status - Check system status\n";
-                msg += "/gaslevel - Check remaining gas percentage\n";
-                msg += "/ping - Check if bot is responsive\n";
-                msg += "/help - Show this menu\n";
-                sendMessageToChat(lastChatId, msg);
-            }
+            numNewMessages = bot->getUpdates(bot->last_message_received + 1);
         }
-        numNewMessages = bot->getUpdates(bot->last_message_received + 1);
     }
 }
 
