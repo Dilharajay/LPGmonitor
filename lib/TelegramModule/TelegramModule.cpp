@@ -8,7 +8,7 @@ TelegramModule::TelegramModule(ScaleDriver& scale, GasSensorModule& gasSensor, T
 void TelegramModule::begin(SettingsModule& settings) {
     _settings = &settings;
     client.setInsecure();  // production: use CA cert instead
-    client.setBufferSizes(1024, 1024); // Reduce BearSSL memory footprint
+    client.setBufferSizes(1024, 1024); // Reduce BearSSL memory footprint to prevent OOM
     client.setTimeout(5000); // Prevent blocking indefinitely
     
     if (String(Config::TELEGRAM_BOT_TOKEN).length() > 0) {

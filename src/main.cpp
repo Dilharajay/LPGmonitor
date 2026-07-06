@@ -100,7 +100,6 @@ void setup()
     // telegram module initialization
     Logger::info(F("Initializing Telegram Module..."));
     telegramModule.begin(settingsModule);
-    telegramModule.sendMessage(F("Smart LPG Monitor started."));
 
     cli.printHelp();
 }
