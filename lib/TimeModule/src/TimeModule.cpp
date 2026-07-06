@@ -49,73 +49,51 @@ void TimeModule::begin(TerminalCLI& cli, SettingsModule& s) {
     }
 }
 
+static bool ntpSyncInProgress = false;
+static unsigned long ntpSyncStartMs = 0;
+static int ntpAttempts = 0;
+
 void TimeModule::update() {
-    // Empty for now, but could be used to occasionally re-sync
+    if (ntpSyncInProgress) {
+        if (millis() - ntpSyncStartMs > 500) {
+            ntpSyncStartMs = millis();
+            time_t now = time(nullptr);
+            if (now > 24 * 3600) {
+                ntpSyncInProgress = false;
+                struct tm timeinfo;
+                localtime_r(&now, &timeinfo); // Use local time for RTC
+                
+                // Output fetched time
+                char timeStr[64];
+                strftime(timeStr, sizeof(timeStr), "%Y-%m-%d %H:%M:%S", &timeinfo);
+                Logger::info("NTP Time acquired: ");
+                Logger::info(timeStr);
+
+                // Update RTC if it exists
+                if (rtcFound) {
+                    rtc.adjust(DateTime(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, 
+                                        timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec));
+                    Logger::info("RTC successfully updated from NTP!");
+                } else {
+                    Logger::warn("NTP time fetched, but no RTC to update.");
+                }
+            } else {
+                ntpAttempts++;
+                if (ntpAttempts >= 40) {
+                    ntpSyncInProgress = false;
+                    Logger::error(F("Failed to get time from NTP server."));
+                }
+            }
+        }
+    }
 }
 
 void TimeModule::syncWithNTP() {
-    Logger::info(F("Connecting to WiFi for NTP sync..."));
-    Logger::debug(F("SSID: "));
-    Logger::debug(settings->getSSID());
-
-    // Start WiFi connection
-    WiFi.begin(settings->getSSID(), settings->getPassword());
-
-    int attempts = 0;
-    while (WiFi.status() != WL_CONNECTED && attempts < 20) {
-        delay(500);
-        Logger::raw(F("."));
-        attempts++;
-    }
-    Logger::rawln();
-
-    if (WiFi.status() != WL_CONNECTED) {
-        Logger::error(F("Failed to connect to WiFi. NTP sync aborted."));
-        return;
-    }
-
-    Logger::info(F("WiFi connected. IP: "));
-    Logger::info(WiFi.localIP().toString().c_str());
-    
-    // Setup NTP
     Logger::info(F("Requesting time from NTP server..."));
     configTime(settings->getTimezoneOffsetSec(), Config::DAYLIGHT_OFFSET_SEC, settings->getNtpServer());
-
-    // Wait for time to be set
-    time_t now = time(nullptr);
-    attempts = 0;
-    while (now < 24 * 3600 && attempts < 20) {
-        delay(500);
-        Logger::raw(F("."));
-        now = time(nullptr);
-        attempts++;
-    }
-    Logger::rawln();
-
-    if (now < 24 * 3600) {
-        Logger::error(F("Failed to get time from NTP server."));
-    } else {
-        struct tm timeinfo;
-        localtime_r(&now, &timeinfo); // Use local time for RTC
-        
-        // Output fetched time
-        char timeStr[64];
-        strftime(timeStr, sizeof(timeStr), "%Y-%m-%d %H:%M:%S", &timeinfo);
-        Logger::info("NTP Time acquired: ");
-        Logger::info(timeStr);
-
-        // Update RTC if it exists
-        if (rtcFound) {
-            rtc.adjust(DateTime(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, 
-                                timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec));
-            Logger::info("RTC successfully updated from NTP!");
-        } else {
-            Logger::warn("NTP time fetched, but no RTC to update.");
-        }
-    }
-
-    // No need to disconnect WiFi since the web server will use it
-    Logger::info("NTP Sync completed.");
+    ntpSyncInProgress = true;
+    ntpSyncStartMs = millis();
+    ntpAttempts = 0;
 }
 
 String TimeModule::getTimeString() {
@@ -124,11 +102,12 @@ String TimeModule::getTimeString() {
         if (now_t < 24 * 3600) {
             return "1970-01-01 00:00:00"; // Not synced yet
         }
-        struct tm* timeinfo = localtime(&now_t);
+        struct tm timeinfo;
+        localtime_r(&now_t, &timeinfo);
         char buf[32];
         snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d",
-                 timeinfo->tm_year + 1900, timeinfo->tm_mon + 1, timeinfo->tm_mday,
-                 timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
+                 timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday,
+                 timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
         return String(buf);
     }
     
@@ -141,13 +120,9 @@ String TimeModule::getTimeString() {
 }
 
 void TimeModule::handleTimeCommand(String args) {
-    if (!rtcFound) {
-        Logger::error("RTC not initialized. Cannot read time.");
-        return;
-    }
-    
-    Logger::raw("Current RTC Time: ");
+    Logger::raw("Current Time: ");
     Logger::rawln(getTimeString().c_str());
+    if (!rtcFound) Logger::warn(F("(No RTC — using NTP software clock)"));
 }
 
 void TimeModule::handleSyncCommand(String args) {

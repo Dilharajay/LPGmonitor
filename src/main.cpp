@@ -12,6 +12,7 @@
 #include "MqttModule.h"
 #include "OTA/OTAmanager.h"
 #include "LEDModule.h"
+#include "TelegramModule.h"
 #include "WifiWorker/WifiWorker.h"
 
 // Global Modules 
@@ -19,7 +20,7 @@ TerminalCLI cli;
 ScaleDriver scaleDriver;
 ScaleModule scaleModule(scaleDriver);
 GasSensorModule gasSensor;
-
+TelegramModule telegramModule;
 SettingsModule settingsModule;
 TimeModule  timeModule;
 
@@ -44,7 +45,13 @@ void setup()
     // 3. Start WiFi (non-blocking)
     wifiWorker.begin(settingsModule.getSSID(), settingsModule.getPassword());
     Logger::info(F("Attempting WiFi connection..."));
-    wifiWorker.connect();
+    if (wifiWorker.connect()) {
+        Logger::info(F("WiFi connected successfully. IP Address: "));
+        Logger::info(WiFi.localIP().toString().c_str());
+
+    } else {
+        Logger::warn(F("WiFi connection failed or timed out. Continuing in offline mode."));
+    }
     
     // 4. Initialize Hardware Drivers
     Logger::info(F("Initializing HX711..."));
@@ -87,6 +94,11 @@ void setup()
         settingsModule.getOtaPassword()
     );
 
+    // telegram module initialization
+    Logger::info(F("Initializing Telegram Module..."));
+    telegramModule.begin();
+    telegramModule.sendMessage(F("Smart LPG Monitor started."));
+
     cli.printHelp();
 }
 
@@ -102,6 +114,7 @@ void loop()
     gasSensor.update();
     timeModule.update();
     mqttModule.update();
+    telegramModule.update();
 
     // Update LED status based on WiFi and streaming state
     if (scaleModule.isStreaming()) {
@@ -110,13 +123,6 @@ void loop()
         ledModule.setStreaming(false);
     }
     ledModule.update();
-
-    // Log WiFi connection once when established
-    if (!wifiLogged && WiFi.status() == WL_CONNECTED) {
-        wifiLogged = true;
-        Logger::info(F("WiFi connected. IP: "));
-        Logger::info(WiFi.localIP().toString().c_str());
-    }
     
     if (settingsModule.isWebInterfaceEnabled()) {
         uint32_t now = millis();

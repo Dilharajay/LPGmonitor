@@ -6,11 +6,14 @@ MqttModule::MqttModule(ScaleDriver& scale, GasSensorModule& gasSensor, TimeModul
 
 void MqttModule::begin(SettingsModule& settings) {
     _settings = &settings;
+    _wifiClient.setTimeout(2000);
     _client.setClient(_wifiClient);
+    _client.setBufferSize(512);
     _client.setServer(_settings->getMqttBroker(), _settings->getMqttPort());
 }
 
 void MqttModule::update() {
+    if (!_settings) return;
     if (WiFi.status() != WL_CONNECTED || !_settings->isTelemetryEnabled()) {
         return;
     }
@@ -37,11 +40,14 @@ void MqttModule::reconnect() {
         const char* user = _settings->getMqttUser();
         const char* pass = _settings->getMqttPassword();
         
+        char clientId[24];
+        snprintf(clientId, sizeof(clientId), "LPG_%08X", ESP.getChipId());
+        
         bool connected = false;
         if (strlen(user) > 0) {
-            connected = _client.connect("LPGMonitor", user, pass);
+            connected = _client.connect(clientId, user, pass);
         } else {
-            connected = _client.connect("LPGMonitor");
+            connected = _client.connect(clientId);
         }
         
         if (connected) {

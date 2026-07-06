@@ -9,6 +9,10 @@ namespace Config {
     constexpr const char* PROJECT_NAME = "Smart LPG Monitor";
     constexpr const char* PROJECT_VERSION = "1.0.0";
 
+    // Telegram Bot Settings
+    constexpr const char* TELEGRAM_BOT_TOKEN = telegramBotToken; // Injected via build script from .env
+    constexpr const char* TELEGRAM_CHAT_ID = telegramChatId;     // Injected via build script from .env
+
     // WEB and MQTT default settings
     constexpr uint32_t WEB_UPDATE_INTERVAL_MS = 1000; // Update web interface every second
 

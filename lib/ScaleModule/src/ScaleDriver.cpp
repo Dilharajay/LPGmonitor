@@ -55,28 +55,16 @@ void ScaleDriver::resetFilters() {
 
 // ── Tare ───────────────────────────────────────────────────────────
 long ScaleDriver::performTare() {
-    long sum = 0;
-    int valid = 0;
-
-    for (int i = 0; i < 10; i++) {
-        if (scale.wait_ready_timeout(1000)) {
-            sum += scale.read();
-            valid++;
-        }
-        delay(10);
-    }
-
-    if (valid > 0) {
-        scale.tare(10);
-        long offset = scale.get_offset();
-        Logger::info(F("Scale Tared. New Offset: "));
-        Logger::info(String(offset).c_str());
-        resetFilters();
-        return offset;
-    } else {
+    if (!scale.wait_ready_timeout(2000)) {
         Logger::error(F("Tare failed! HX711 timeout."));
-        return 0;
+        return -2147483647L - 1L;
     }
+    scale.tare(10);
+    long offset = scale.get_offset();
+    Logger::info(F("Scale Tared. New Offset: "));
+    Logger::info(String(offset).c_str());
+    resetFilters();
+    return offset;
 }
 
 long ScaleDriver::getTareOffset() {

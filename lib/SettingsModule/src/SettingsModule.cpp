@@ -1,8 +1,10 @@
 #include "SettingsModule.h"
 #include "Logger.h"
 
-#define EEPROM_SIZE 512
+#define EEPROM_SIZE 1024
 #define MAGIC_WORD "CFG3"
+
+static_assert(sizeof(SystemSettings) <= EEPROM_SIZE, "SystemSettings exceeds EEPROM allocation!");
 
 SettingsModule::SettingsModule() {
     // Defaults will be loaded in begin()
@@ -270,7 +272,12 @@ void SettingsModule::handleSetMqttPort(String args) {
         Logger::warn(F("Usage: set_mqtt_port <Port>"));
         return;
     }
-    setMqttPort(args.toInt());
+    int port = args.toInt();
+    if (port <= 0 || port > 65535) {
+        Logger::warn(F("Invalid port. Must be 1-65535"));
+        return;
+    }
+    setMqttPort(port);
     Logger::info(F("MQTT Port updated"));
 }
 
@@ -309,8 +316,7 @@ void SettingsModule::handlePrintSettings(String args) {
     
     Logger::raw(F("Password   : "));
     // Optional: Hide password for security, but we'll show it or mask it
-    Logger::rawln(F("********")); // masked for security, or show it? Let's show it since it's a dev cli
-    //Logger::rawln(settings.password);
+    Logger::rawln(settings.password[0] ? F("********") : F("(not set)"));
     
     Logger::raw(F("NTP Server : "));
     Logger::rawln(settings.ntpServer);
@@ -341,6 +347,12 @@ void SettingsModule::handlePrintSettings(String args) {
 
     Logger::raw(F("MQTT User  : "));
     Logger::rawln(settings.mqttUser);
+
+    Logger::raw(F("MQTT Pwd   : "));
+    Logger::rawln(settings.mqttPassword[0] ? F("********") : F("(not set)"));
+    
+    Logger::raw(F("OTA Pwd    : "));
+    Logger::rawln(settings.otaPassword[0] ? F("********") : F("(not set)"));
     
     Logger::rawln(F("======================="));
 }
