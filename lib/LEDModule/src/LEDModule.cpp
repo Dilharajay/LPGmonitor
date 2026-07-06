@@ -83,8 +83,8 @@ void LEDModule::updateWiFiStatus() {
     wl_status_t wifiStatus = WiFi.status();
     
     if (wifiStatus == WL_CONNECTED) {
-        // Only transition to CONNECTED if we're currently connecting
-        if (mode == LEDMode::CONNECTING) {
+        // Transition to CONNECTED if we haven't shown it yet
+        if (mode == LEDMode::CONNECTING || (mode == LEDMode::OFF && connectedAtMs == 0)) {
             setMode(LEDMode::CONNECTED);
             Logger::info(F("WiFi connected - LED indicator ON"));
         }

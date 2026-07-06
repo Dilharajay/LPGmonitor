@@ -42,7 +42,11 @@ void setup()
     // 2. Initialize Config and EEPROM (do this before hardware so we can read settings)
     settingsModule.begin(cli);
 
-    // 3. Start WiFi (non-blocking)
+    // 3. Initialize LED Module first so it can show connecting status
+    Logger::info(F("Initializing LED Module..."));
+    ledModule.begin(Config::LED_PIN);
+
+    // 4. Start WiFi (non-blocking)
     wifiWorker.begin(settingsModule.getSSID(), settingsModule.getPassword());
     Logger::info(F("Attempting WiFi connection..."));
     if (wifiWorker.connect()) {
@@ -53,10 +57,7 @@ void setup()
         Logger::warn(F("WiFi connection failed or timed out. Continuing in offline mode."));
     }
     
-    // 4. Initialize Hardware Drivers
-    Logger::info(F("Initializing LED Module..."));
-    ledModule.begin(Config::LED_PIN);
-    
+    // 5. Initialize Hardware Drivers
     Logger::info(F("Initializing HX711..."));
     if (!scaleDriver.begin(Config::HX711_DOUT_PIN, Config::HX711_SCK_PIN, Config::DEFAULT_CALIBRATION_FACTOR, settingsModule.getTareOffset())) {
         Logger::error(F("Scale initialization failed. Continuing in degraded mode."));
@@ -119,10 +120,11 @@ void loop()
     telegramModule.update();
 
     // Update LED status based on WiFi and streaming state
-    if (scaleModule.isStreaming()) {
-        ledModule.setStreaming(true);
-    } else {
-        ledModule.setStreaming(false);
+    static bool lastStreamingState = false;
+    bool currentStreamingState = scaleModule.isStreaming();
+    if (currentStreamingState != lastStreamingState) {
+        ledModule.setStreaming(currentStreamingState);
+        lastStreamingState = currentStreamingState;
     }
     ledModule.update();
     
