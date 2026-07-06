@@ -59,6 +59,10 @@ This project is built using [PlatformIO](https://platformio.org/).
 pio run -e nodemcuv2 -t upload
 ```
 
+## Continuous Integration (CI)
+
+This project uses **GitHub Actions** for automated continuous integration. On every push and pull request, the `CI Build` workflow automatically runs a PlatformIO compilation check for the `nodemcuv2` environment to ensure the firmware builds successfully and regressions are caught early.
+
 ## Setup & Secrets
 
 - WiFi and MQTT credentials are stored in device EEPROM and can be set via the Serial CLI after first boot. Recommended workflow:
@@ -100,3 +104,7 @@ This firmware implements several memory management best practices for constraine
 - **MQTT Backoff:** Implements exponential backoff with jitter for failed MQTT reconnection attempts, reducing network thrashing and improving graceful degradation.
 - **Efficient Filtering:** The scale driver uses a compact median buffer (configurable window size) and EMA smoothing without unnecessary dynamic allocations.
 - **Sensor Degradation:** If hardware (HX711, RTC) fails to initialize, the system continues in degraded mode instead of halting, allowing OTA updates and CLI access for troubleshooting.
+- **EEPROM Integrity:** Uses `static_assert` to prevent silent corruption if settings exceed EEPROM size, avoiding memory boundary overwrites.
+- **PROGMEM HTML:** Web Interface dashboard HTML is stored entirely in flash memory (`PROGMEM`) instead of RAM, saving ~8KB of precious heap space on the ESP8266.
+- **Circular Log Buffer:** Live logs are managed in a static circular buffer to prevent heap fragmentation and OOM crashes caused by `String` reallocation over long runtimes.
+- **Fully Non-blocking Network Stack:** MQTT TCP connect timeouts and NTP time synchronization loops are non-blocking or strictly bounded, preventing the firmware from freezing when services are unreachable.
