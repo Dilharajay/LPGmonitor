@@ -54,6 +54,9 @@ void setup()
     }
     
     // 4. Initialize Hardware Drivers
+    Logger::info(F("Initializing LED Module..."));
+    ledModule.begin(Config::LED_PIN);
+    
     Logger::info(F("Initializing HX711..."));
     if (!scaleDriver.begin(Config::HX711_DOUT_PIN, Config::HX711_SCK_PIN, Config::DEFAULT_CALIBRATION_FACTOR, settingsModule.getTareOffset())) {
         Logger::error(F("Scale initialization failed. Continuing in degraded mode."));
