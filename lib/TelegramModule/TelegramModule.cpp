@@ -90,9 +90,9 @@ void TelegramModule::update() {
         }
     }
 
-    // Handle incoming messages - rate limit to check every 3 seconds to prevent HTTPS OOM crashes
+    // Handle incoming messages - rate limit to check every 15 seconds to prevent HTTPS blocking the Web UI/MQTT
     static unsigned long _lastTelegramPollMs = 0;
-    if (now - _lastTelegramPollMs > 3000) {
+    if (now - _lastTelegramPollMs > 15000) {
         _lastTelegramPollMs = now;
         
         int numNewMessages = bot->getUpdates(bot->last_message_received + 1);
