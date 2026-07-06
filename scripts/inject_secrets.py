@@ -43,7 +43,6 @@ telegram_chat_id = get_secret("TELEGRAM_CHAT_ID") or ""
 env.Append(CPPDEFINES=[("telegramBotToken", f'\\"{telegram_bot_token}\\"')])
 env.Append(CPPDEFINES=[("telegramChatId", f'\\"{telegram_chat_id}\\"')])
 
-ota_password = get_secret("OTA_PASSWORD")
+ota_password = get_secret("OTA_PASSWORD") or "admin"
 
-if ota_password:
-    env.Append(UPLOAD_FLAGS=[f"--auth={ota_password}"])
+env.Append(UPLOAD_FLAGS=[f"--auth={ota_password}"])
