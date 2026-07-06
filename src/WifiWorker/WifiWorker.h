@@ -10,7 +10,7 @@ public:
     void begin(const char* ssid, const char* password);
 
     bool isConnected();
-    bool connect(uint32_t timeoutMs = 15000);
+    bool connect(uint32_t timeoutMs = 15000, void (*tickCb)() = nullptr);
 
     void update();   // FIX: allows auto-reconnect
     IPAddress ip();

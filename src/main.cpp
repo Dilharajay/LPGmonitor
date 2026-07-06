@@ -49,7 +49,7 @@ void setup()
     // 4. Start WiFi (non-blocking)
     wifiWorker.begin(settingsModule.getSSID(), settingsModule.getPassword());
     Logger::info(F("Attempting WiFi connection..."));
-    if (wifiWorker.connect()) {
+    if (wifiWorker.connect(15000, []() { ledModule.update(); })) {
         Logger::info(F("WiFi connected successfully. IP Address: "));
         Logger::info(WiFi.localIP().toString().c_str());
 

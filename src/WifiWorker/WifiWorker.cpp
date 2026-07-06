@@ -11,7 +11,7 @@ void WiFiWorker::begin(const char* ssid, const char* password)
     Logger::info("WiFi module initialized");
 }
 
-bool WiFiWorker::connect(uint32_t timeoutMs)
+bool WiFiWorker::connect(uint32_t timeoutMs, void (*tickCb)())
 {
     if (!_ssid || !_password)
     {
@@ -27,7 +27,8 @@ bool WiFiWorker::connect(uint32_t timeoutMs)
 
     while (WiFi.status() != WL_CONNECTED)
     {
-        delay(250);
+        if (tickCb) tickCb();
+        delay(50);
         yield(); // FIX: watchdog safety
 
         if (millis() - start > timeoutMs)
