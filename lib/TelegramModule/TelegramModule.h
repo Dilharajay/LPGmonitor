@@ -2,10 +2,16 @@
 
 #include <WiFiClientSecure.h>
 #include <UniversalTelegramBot.h>
+#include "ScaleDriver.h"
+#include "GasSensorModule.h"
+#include "SettingsModule.h"
+#include "TimeModule.h"
 
 class TelegramModule {
 public:
-    void begin();
+    TelegramModule(ScaleDriver& scale, GasSensorModule& gasSensor, TimeModule& time);
+    
+    void begin(SettingsModule& settings);
     void update();
 
     void sendMessage(const String& msg);
@@ -16,11 +22,19 @@ public:
 
 private:
     void sendMessageToChat(const String& chatId, const String& msg);
+    float getGasPercentage();
+
+    ScaleDriver& _scale;
+    GasSensorModule& _gasSensor;
+    TimeModule& _time;
+    SettingsModule* _settings;
 
     WiFiClientSecure client;
     UniversalTelegramBot* bot;
 
-    int lastUpdateTime = 0;
+    bool _leakAlertSent = false;
+    bool _lowGasAlertSent = false;
+    unsigned long _lastUpdateMs = 0;
 
     String lastMessage = "";
     String lastChatId = "";

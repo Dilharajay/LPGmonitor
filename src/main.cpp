@@ -20,9 +20,9 @@ TerminalCLI cli;
 ScaleDriver scaleDriver;
 ScaleModule scaleModule(scaleDriver);
 GasSensorModule gasSensor;
-TelegramModule telegramModule;
 SettingsModule settingsModule;
 TimeModule  timeModule;
+TelegramModule telegramModule(scaleDriver, gasSensor, timeModule);
 
 WiFiWorker wifiWorker;
  
@@ -96,7 +96,7 @@ void setup()
 
     // telegram module initialization
     Logger::info(F("Initializing Telegram Module..."));
-    telegramModule.begin();
+    telegramModule.begin(settingsModule);
     telegramModule.sendMessage(F("Smart LPG Monitor started."));
 
     cli.printHelp();
