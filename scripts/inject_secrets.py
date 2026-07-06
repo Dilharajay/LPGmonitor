@@ -37,14 +37,11 @@ def get_secret(name):
     return project_env.get(name) or os.getenv(name)
 
 
-telegram_bot_token = get_secret("TELEGRAM_BOT_TOKEN")
-telegram_chat_id = get_secret("TELEGRAM_CHAT_ID")
+telegram_bot_token = get_secret("TELEGRAM_BOT_TOKEN") or ""
+telegram_chat_id = get_secret("TELEGRAM_CHAT_ID") or ""
 
-if telegram_bot_token:
-    env.Append(CPPDEFINES=[("telegramBotToken", f'\\"{telegram_bot_token}\\"')])
-
-if telegram_chat_id:
-    env.Append(CPPDEFINES=[("telegramChatId", f'\\"{telegram_chat_id}\\"')])
+env.Append(CPPDEFINES=[("telegramBotToken", f'\\"{telegram_bot_token}\\"')])
+env.Append(CPPDEFINES=[("telegramChatId", f'\\"{telegram_chat_id}\\"')])
 
 ota_password = get_secret("OTA_PASSWORD")
 
