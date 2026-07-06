@@ -4,6 +4,25 @@
 #include <Arduino.h>
 
 namespace Config {
+
+    // Project info
+    constexpr const char* PROJECT_NAME = "Smart LPG Monitor";
+    constexpr const char* PROJECT_VERSION = "1.0.0";
+
+    // Telegram Bot Settings
+    constexpr const char* TELEGRAM_BOT_TOKEN = telegramBotToken; // Injected via build script from .env
+    constexpr const char* TELEGRAM_CHAT_ID = telegramChatId;     // Injected via build script from .env
+
+    // WEB and MQTT default settings
+    constexpr uint32_t WEB_UPDATE_INTERVAL_MS = 1000; // Update web interface every second
+
+    // LED Status Indicator
+    constexpr uint8_t LED_PIN = D4; // GPIO2 (D4 on NodeMCU)
+
+    // OTA Update Settings
+    constexpr const char* OTA_HOSTNAME = "SmartLPGMonitor";
+    // OTA password is stored in runtime settings (SettingsModule) to avoid
+    // hardcoding secrets in source. Configure via the CLI `set_ota_pwd`.
     // ── Hardware Pins ──
     constexpr uint8_t HX711_DOUT_PIN = D2; // GPIO4 (D2 on NodeMCU)
     constexpr uint8_t HX711_SCK_PIN  = D1; // GPIO5 (D1 on NodeMCU)

@@ -20,7 +20,7 @@ void ScaleModule::begin(TerminalCLI& cli, SettingsModule& s) {
 void ScaleModule::handleTare(String args) {
     Logger::info("Taring... please wait.");
     long newOffset = scaleDriver.performTare();
-    if (newOffset != 0 && settings) {
+    if (newOffset != -2147483647L - 1L && settings) { // Using standard literal for LONG_MIN
         settings->setTareOffset(newOffset);
         Logger::info("New tare offset saved to EEPROM.");
     }
@@ -42,12 +42,16 @@ void ScaleModule::update() {
     
     // 2. Output stream if enabled
     if (isStreamingData) {
-        float weight = scaleDriver.getFilteredWeight();
-        
-        Logger::raw("Weight: ");
-        Logger::raw(weight, 1);
-        Logger::raw(" g    ");
-        Logger::raw(weight / 1000.0, 3);
-        Logger::rawln(" kg");
+        static unsigned long lastStreamMs = 0;
+        if (millis() - lastStreamMs >= 500) {
+            lastStreamMs = millis();
+            float weight = scaleDriver.getFilteredWeight();
+            
+            Logger::raw("Weight: ");
+            Logger::raw(weight, 1);
+            Logger::raw(" g    ");
+            Logger::raw(weight / 1000.0, 3);
+            Logger::rawln(" kg");
+        }
     }
 }

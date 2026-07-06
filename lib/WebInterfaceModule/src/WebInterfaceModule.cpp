@@ -6,7 +6,7 @@
 // Designed to match a Home-Assistant-style dark LPG monitor dashboard
 // with a slide-out settings panel on the right.
 
-const char* htmlPage = R"rawliteral(
+const char htmlPage[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -365,7 +365,7 @@ void WebInterfaceModule::begin(SettingsModule& s, TerminalCLI& cli) {
     bootTimeMs = millis();
 
     if (WiFi.status() == WL_CONNECTED) {
-        Logger::info("Web Interface Server IP: ");
+        Logger::info(F("Web Interface Server IP: "));
         Logger::info(WiFi.localIP().toString().c_str());
 
         server.on("/", HTTP_GET, [this]() { this->handleRoot(); });
@@ -373,9 +373,9 @@ void WebInterfaceModule::begin(SettingsModule& s, TerminalCLI& cli) {
         server.on("/api/config", HTTP_POST, [this]() { this->handleConfig(); });
         
         server.begin();
-        Logger::info("HTTP server started");
+        Logger::info(F("HTTP server started"));
     } else {
-        Logger::error("WebInterface: WiFi not connected, server not started.");
+        Logger::error(F("WebInterface: WiFi not connected, server not started."));
     }
 }
 
@@ -384,10 +384,16 @@ void WebInterfaceModule::update() {
 }
 
 void WebInterfaceModule::handleRoot() {
-    server.send(200, "text/html", htmlPage);
+    if (!server.authenticate("admin", settings->getOtaPassword())) {
+        return server.requestAuthentication();
+    }
+    server.send_P(200, "text/html", htmlPage);
 }
 
 void WebInterfaceModule::handleStatus() {
+    if (!server.authenticate("admin", settings->getOtaPassword())) {
+        return server.requestAuthentication();
+    }
     JsonDocument doc;
     doc["weight"] = scale.getFilteredWeight();
     doc["time"] = timeModule.getTimeString();
@@ -411,6 +417,10 @@ void WebInterfaceModule::handleStatus() {
 }
 
 void WebInterfaceModule::handleConfig() {
+    if (!server.authenticate("admin", settings->getOtaPassword())) {
+        return server.requestAuthentication();
+    }
+    
     String body;
     if (server.hasArg("plain")) {
         body = server.arg("plain");
@@ -448,14 +458,19 @@ void WebInterfaceModule::handleConfig() {
         scale.setTareOffset(doc["tare_offset"].as<long>());
     }
     if (doc["full_cyl_weight"].is<float>()) {
-        settings->setFullCylinderWeight(doc["full_cyl_weight"].as<float>());
+        float val = doc["full_cyl_weight"].as<float>();
+        if (val > 0) settings->setFullCylinderWeight(val);
     }
     if (doc["empty_cyl_weight"].is<float>()) {
-        settings->setEmptyCylinderWeight(doc["empty_cyl_weight"].as<float>());
+        float val = doc["empty_cyl_weight"].as<float>();
+        if (val > 0) settings->setEmptyCylinderWeight(val);
     }
     if (doc["gas_threshold"].is<int>()) {
-        settings->setGasLeakThreshold(doc["gas_threshold"].as<int>());
-        gasSensor.setLeakThreshold(doc["gas_threshold"].as<int>());
+        int val = doc["gas_threshold"].as<int>();
+        if (val > 0) {
+            settings->setGasLeakThreshold(val);
+            gasSensor.setLeakThreshold(val);
+        }
     }
 
     server.send(200, "application/json", "{\"status\":\"success\"}");

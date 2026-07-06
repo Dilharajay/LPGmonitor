@@ -2,7 +2,9 @@
 
 bool     Logger::debugMode = false;
 LogLevel Logger::minLevel  = LogLevel::INFO;  // show INFO and above by default
-String   Logger::logBuffer = "";
+static char logRing[2048];
+static size_t logHead = 0;
+static size_t logLen = 0;
 
 void Logger::begin(bool enableDebug) {
     debugMode = enableDebug;
@@ -28,13 +30,24 @@ LogLevel Logger::getLogLevel() {
 }
 
 String Logger::getLogBuffer() {
-    return logBuffer;
+    String out;
+    out.reserve(logLen);
+    for (size_t i = 0; i < logLen; i++) {
+        out += logRing[(logHead + i) % sizeof(logRing)];
+    }
+    return out;
 }
 
 void Logger::appendLog(String s) {
-    logBuffer += s;
-    if (logBuffer.length() > 2000) {
-        logBuffer = logBuffer.substring(logBuffer.length() - 1000);
+    for (size_t i = 0; i < s.length(); i++) {
+        char c = s[i];
+        if (logLen < sizeof(logRing)) {
+            logRing[(logHead + logLen) % sizeof(logRing)] = c;
+            logLen++;
+        } else {
+            logRing[logHead] = c;
+            logHead = (logHead + 1) % sizeof(logRing);
+        }
     }
 }
 

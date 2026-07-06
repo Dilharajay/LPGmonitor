@@ -15,30 +15,31 @@ ScaleDriver::ScaleDriver()
 }
 
 // ── Init ───────────────────────────────────────────────────────────
-void ScaleDriver::begin(uint8_t doutPin, uint8_t sckPin, float calFactor, long savedOffset) {
+bool ScaleDriver::begin(uint8_t doutPin, uint8_t sckPin, float calFactor, long savedOffset) {
     scale.begin(doutPin, sckPin);
     calibrationFactor = calFactor;
 
-    Logger::debug("HX711 Started");
-    Logger::info("Remove all weight...");
-    delay(3000);
+    Logger::debug(F("HX711 driver initialized."));
 
-    Logger::debug("Checking HX711 connection...");
+    Logger::debug(F("Checking HX711 connection..."));
 
     if (scale.wait_ready_timeout(2000)) {
-        Logger::info("HX711 connected! Restoring tare offset from EEPROM.");
+        Logger::info(F("HX711 connected! Restoring tare offset from EEPROM."));
         scale.set_offset(savedOffset);
     } else {
-        Logger::error("HX711 not found!");
-        Logger::error("Check wiring! Ensure DT is on D2 and SCK is on D1.");
-        while (1) delay(10);
+        Logger::error(F("HX711 not found!"));
+        Logger::error(F("Check wiring! Ensure DT is on D2 and SCK is on D1."));
+        // Do not halt the system. Return false so caller can continue in degraded mode.
+        return false;
     }
 
-    Logger::debug("Setting calibration factor...");
+    Logger::debug(F("Setting calibration factor..."));
     scale.set_scale(calibrationFactor);
 
-    Logger::debug("Offset = ");
+    Logger::debug(F("Offset = "));
     Logger::debug(scale.get_offset());
+
+    return true;
 }
 
 // ── Filter reset ───────────────────────────────────────────────────
@@ -54,28 +55,16 @@ void ScaleDriver::resetFilters() {
 
 // ── Tare ───────────────────────────────────────────────────────────
 long ScaleDriver::performTare() {
-    long sum = 0;
-    int valid = 0;
-
-    for (int i = 0; i < 10; i++) {
-        if (scale.wait_ready_timeout(1000)) {
-            sum += scale.read();
-            valid++;
-        }
-        delay(10);
+    if (!scale.wait_ready_timeout(2000)) {
+        Logger::error(F("Tare failed! HX711 timeout."));
+        return -2147483647L - 1L;
     }
-
-    if (valid > 0) {
-        scale.tare(10);
-        long offset = scale.get_offset();
-        Logger::info("Scale Tared. New Offset: ");
-        Logger::info(String(offset).c_str());
-        resetFilters();
-        return offset;
-    } else {
-        Logger::error("Tare failed! HX711 timeout.");
-        return 0;
-    }
+    scale.tare(10);
+    long offset = scale.get_offset();
+    Logger::info(F("Scale Tared. New Offset: "));
+    Logger::info(String(offset).c_str());
+    resetFilters();
+    return offset;
 }
 
 long ScaleDriver::getTareOffset() {
@@ -84,20 +73,20 @@ long ScaleDriver::getTareOffset() {
 
 void ScaleDriver::setTareOffset(long offset) {
     scale.set_offset(offset);
-    Logger::info("Applied tare offset: ");
+    Logger::info(F("Applied tare offset: "));
     Logger::info(String(offset).c_str());
 }
 
 // ── Calibration ────────────────────────────────────────────────────
 void ScaleDriver::performCalibration(float knownWeight) {
     if (knownWeight <= 0) {
-        Logger::warn("Invalid weight! Usage: c <weight_in_grams>");
+        Logger::warn(F("Invalid weight! Usage: c <weight_in_grams>"));
         return;
     }
 
-    Logger::raw("\nCalibrating with known weight: ");
+    Logger::raw(F("\nCalibrating with known weight: "));
     Logger::raw(knownWeight);
-    Logger::rawln(" g... please wait.");
+    Logger::rawln(F(" g... please wait."));
 
     long diffSum = 0;
     int valid = 0;
@@ -115,13 +104,13 @@ void ScaleDriver::performCalibration(float knownWeight) {
         calibrationFactor = (float)avgDiff / knownWeight;
         scale.set_scale(calibrationFactor);
 
-        Logger::raw("Calibration complete! New Calibration Factor: ");
+        Logger::raw(F("Calibration complete! New Calibration Factor: "));
         Logger::rawln(calibrationFactor);
-        Logger::info("Update 'defaultCalibrationFactor' in main with this value.");
+        Logger::info(F("Update 'defaultCalibrationFactor' in main with this value."));
 
         resetFilters();
     } else {
-        Logger::error("Calibration failed! HX711 timeout.");
+        Logger::error(F("Calibration failed! HX711 timeout."));
     }
 }
 
@@ -162,7 +151,7 @@ void ScaleDriver::update() {
 
     // ── Stage 0: reject negative readings ──────────────────────────
     if (raw < 0.0f) {
-        Logger::debug("Negative reading rejected");
+        Logger::debug(F("Negative reading rejected"));
         return;            // don't feed garbage into the filters
     }
 

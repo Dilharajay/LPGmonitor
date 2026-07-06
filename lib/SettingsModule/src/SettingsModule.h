@@ -24,6 +24,7 @@ struct SystemSettings {
     int mqttPort;
     char mqttUser[33];
     char mqttPassword[65];
+    char otaPassword[65];
 };
 
 class SettingsModule {
@@ -48,6 +49,7 @@ public:
     int getMqttPort() const { return settings.mqttPort; }
     const char* getMqttUser() const { return settings.mqttUser; }
     const char* getMqttPassword() const { return settings.mqttPassword; }
+    const char* getOtaPassword() const { return settings.otaPassword; }
     
     void setTelemetryEnabled(bool enabled);
     void setTareOffset(long offset);
@@ -64,6 +66,7 @@ public:
     void setMqttPort(int port);
     void setMqttUser(const char* user);
     void setMqttPassword(const char* pwd);
+    void setOtaPassword(const char* pwd);
 
 private:
     SystemSettings settings;
@@ -84,6 +87,7 @@ private:
     void handleSetMqttPort(String args);
     void handleSetMqttUser(String args);
     void handleSetMqttPassword(String args);
+    void handleSetOtaPassword(String args);
 };
 
 #endif

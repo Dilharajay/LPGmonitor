@@ -10,16 +10,27 @@
 #include "TimeModule.h"
 #include "WebInterfaceModule.h"
 #include "MqttModule.h"
+#include "OTA/OTAmanager.h"
+#include "LEDModule.h"
+#include "TelegramModule.h"
+#include "WifiWorker/WifiWorker.h"
 
-// ── Global Modules ─────────────────────────────────────────────────
+// Global Modules 
 TerminalCLI cli;
 ScaleDriver scaleDriver;
 ScaleModule scaleModule(scaleDriver);
 GasSensorModule gasSensor;
+TelegramModule telegramModule;
 SettingsModule settingsModule;
 TimeModule  timeModule;
+
+WiFiWorker wifiWorker;
+ 
+// fix: shared context for web and mqtt modules to avoid multiple instances of ScaleDriver, GasSensorModule, and TimeModule
 WebInterfaceModule webModule(scaleDriver, gasSensor, timeModule);
 MqttModule mqttModule(scaleDriver, gasSensor, timeModule);
+LEDModule ledModule;
+bool wifiLogged = false;
 
 void setup()
 {
@@ -31,30 +42,25 @@ void setup()
     // 2. Initialize Config and EEPROM (do this before hardware so we can read settings)
     settingsModule.begin(cli);
 
-    // 3. Connect to WiFi
-    Logger::info("Connecting to WiFi...");
-    WiFi.mode(WIFI_STA);
-    WiFi.disconnect();
-    delay(100);
-    WiFi.begin(settingsModule.getSSID(), settingsModule.getPassword());
-    int attempts = 0;
-    while (WiFi.status() != WL_CONNECTED && attempts < 30) {
-        delay(500);
-        Logger::raw(".");
-        attempts++;
-    }
-    Logger::rawln();
-    if (WiFi.status() == WL_CONNECTED) {
-        Logger::info("WiFi connected. IP: ");
+    // 3. Start WiFi (non-blocking)
+    wifiWorker.begin(settingsModule.getSSID(), settingsModule.getPassword());
+    Logger::info(F("Attempting WiFi connection..."));
+    if (wifiWorker.connect()) {
+        Logger::info(F("WiFi connected successfully. IP Address: "));
         Logger::info(WiFi.localIP().toString().c_str());
-    } else {
-        Logger::error("WiFi connection failed.");
-    }
 
+    } else {
+        Logger::warn(F("WiFi connection failed or timed out. Continuing in offline mode."));
+    }
+    
     // 4. Initialize Hardware Drivers
-    scaleDriver.begin(Config::HX711_DOUT_PIN, Config::HX711_SCK_PIN, Config::DEFAULT_CALIBRATION_FACTOR, settingsModule.getTareOffset());
+    Logger::info(F("Initializing HX711..."));
+    if (!scaleDriver.begin(Config::HX711_DOUT_PIN, Config::HX711_SCK_PIN, Config::DEFAULT_CALIBRATION_FACTOR, settingsModule.getTareOffset())) {
+        Logger::error(F("Scale initialization failed. Continuing in degraded mode."));
+    }
     
     // 5. Initialize Gas Sensor
+    Logger::info(F("Initializing Gas Sensor..."));
     gasSensor.begin(cli);
     gasSensor.setLeakThreshold(settingsModule.getGasLeakThreshold());
     
@@ -62,27 +68,41 @@ void setup()
     cli.registerCommand("debug", "Toggle debug logging output", [](String args) {
         bool newMode = !Logger::isDebugMode();
         Logger::setDebugMode(newMode);
-        Logger::info(newMode ? "Debug logging: ON" : "Debug logging: OFF");
+        Logger::info(newMode ? F("Debug logging: ON") : F("Debug logging: OFF"));
     });
     
     // 7. Initialize and Register Feature Modules
     scaleModule.begin(cli, settingsModule);
     timeModule.begin(cli, settingsModule);
     mqttModule.begin(settingsModule);
-    
-    // 8. Start CLI (prints welcome prompt and help)
+
+    // 9. Start CLI (prints welcome prompt and help)
     cli.begin("\n=== Smart LPG Monitor Ready ===");
 
-    // 9. Start Web Server Interface (if enabled)
+    // 10. Start Web Server Interface (if enabled)
     if (settingsModule.isWebInterfaceEnabled()) {
-        Logger::info("Web Interface is ENABLED. Starting web server...");
+        Logger::info(F("Web Interface is ENABLED. Starting web server..."));
         webModule.begin(settingsModule, cli);
     } else {
-        Logger::info("Web Interface is DISABLED.");
+        Logger::info(F("Web Interface is DISABLED."));
     }
-    
+
+    // 11. Initialize OTA Updates
+    Logger::info(F("Initializing OTA updates..."));
+    OTA::begin(
+        Config::OTA_HOSTNAME,
+        settingsModule.getOtaPassword()
+    );
+
+    // telegram module initialization
+    Logger::info(F("Initializing Telegram Module..."));
+    telegramModule.begin();
+    telegramModule.sendMessage(F("Smart LPG Monitor started."));
+
     cli.printHelp();
 }
+
+uint32_t lastWebUpdateMs = 0;
 
 void loop()
 {
@@ -94,11 +114,27 @@ void loop()
     gasSensor.update();
     timeModule.update();
     mqttModule.update();
+    telegramModule.update();
+
+    // Update LED status based on WiFi and streaming state
+    if (scaleModule.isStreaming()) {
+        ledModule.setStreaming(true);
+    } else {
+        ledModule.setStreaming(false);
+    }
+    ledModule.update();
     
     if (settingsModule.isWebInterfaceEnabled()) {
-        webModule.update();
+        uint32_t now = millis();
+        if (now - lastWebUpdateMs >= Config::WEB_UPDATE_INTERVAL_MS) {
+            webModule.update();
+            lastWebUpdateMs = now;
+        }
     }
-    
+
+     // Handle OTA updates
+    OTA::loop();
+
     // Yield to ESP8266 background tasks
-    delay(10);
+    yield();
 }

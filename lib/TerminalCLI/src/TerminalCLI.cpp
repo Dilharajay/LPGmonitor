@@ -16,23 +16,23 @@ void TerminalCLI::registerCommand(const String& name, const String& description,
         commands[commandCount].handler = handler;
         commandCount++;
     } else {
-        Logger::error("Max CLI commands reached!");
+        Logger::error(F("Max CLI commands reached!"));
     }
 }
 
 void TerminalCLI::printHelp() {
-    Logger::rawln("\n=== Available Commands ===");
+    Logger::rawln(F("\n=== Available Commands ==="));
     for (int i = 0; i < commandCount; i++) {
-        Logger::raw("  ");
+        Logger::raw(F("  "));
         Logger::raw(commands[i].name);
         // Padding for alignment
         for (int j = commands[i].name.length(); j < 15; j++) {
-            Logger::raw(" ");
+            Logger::raw(F(" "));
         }
-        Logger::raw(": ");
+        Logger::raw(F(": "));
         Logger::rawln(commands[i].description);
     }
-    Logger::rawln("==========================");
+    Logger::rawln(F("=========================="));
 }
 
 void TerminalCLI::handle() {
@@ -65,7 +65,7 @@ void TerminalCLI::handle() {
                 }
                 
                 if (!found) {
-                    Logger::warn("Unknown command! Type 'help' for a list of available commands.");
+                    Logger::warn(F("Unknown command! Type 'help' for a list of available commands."));
                 }
             }
         } else if (c == '\b' || c == 127) { // Handle backspace or delete

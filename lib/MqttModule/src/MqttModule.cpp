@@ -1,24 +1,26 @@
 #include "MqttModule.h"
 
 MqttModule::MqttModule(ScaleDriver& scale, GasSensorModule& gasSensor, TimeModule& time)
-    : _scale(scale), _gasSensor(gasSensor), _time(time), _settings(nullptr), _lastPublishMs(0), _lastReconnectAttemptMs(0) {
+    : _scale(scale), _gasSensor(gasSensor), _time(time), _settings(nullptr), _lastPublishMs(0), _lastReconnectAttemptMs(0), _reconnectDelayMs(2000) {
 }
 
 void MqttModule::begin(SettingsModule& settings) {
     _settings = &settings;
+    _wifiClient.setTimeout(2000);
     _client.setClient(_wifiClient);
+    _client.setBufferSize(512);
     _client.setServer(_settings->getMqttBroker(), _settings->getMqttPort());
 }
 
 void MqttModule::update() {
+    if (!_settings) return;
     if (WiFi.status() != WL_CONNECTED || !_settings->isTelemetryEnabled()) {
         return;
     }
 
     if (!_client.connected()) {
         unsigned long now = millis();
-        // Wait 5 seconds before retrying
-        if (now - _lastReconnectAttemptMs > 5000) {
+        if (now - _lastReconnectAttemptMs > _reconnectDelayMs) {
             _lastReconnectAttemptMs = now;
             reconnect();
         }
@@ -38,15 +40,22 @@ void MqttModule::reconnect() {
         const char* user = _settings->getMqttUser();
         const char* pass = _settings->getMqttPassword();
         
+        char clientId[24];
+        snprintf(clientId, sizeof(clientId), "LPG_%08X", ESP.getChipId());
+        
         bool connected = false;
         if (strlen(user) > 0) {
-            connected = _client.connect("LPGMonitor", user, pass);
+            connected = _client.connect(clientId, user, pass);
         } else {
-            connected = _client.connect("LPGMonitor");
+            connected = _client.connect(clientId);
         }
         
         if (connected) {
             // connected successfully
+            _reconnectDelayMs = 2000; // reset backoff on success
+        } else {
+            // increase delay with cap and small jitter
+            _reconnectDelayMs = min(60000UL, _reconnectDelayMs * 2 + (random(0, 1000)));
         }
     }
 }
