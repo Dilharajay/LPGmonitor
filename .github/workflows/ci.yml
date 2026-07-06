@@ -42,5 +42,4 @@ jobs:
           pip install -U platformio
 
       - name: Build Firmware
-        run: pio run -e nodemcuv2
-
+        run: pio run -e nodemcuv2-usb
