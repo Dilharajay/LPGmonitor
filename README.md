@@ -79,6 +79,11 @@ pio run -e nodemcuv2 -t upload --upload-port 192.168.1.102 --upload-flag="--auth
 
 - For CI or local overrides, create a non-committed `platformio_override.ini` (or pass `--upload-flag`) rather than committing secrets to the repo.
 
+## Web Dashboard Login
+To access the local web interface (if enabled via `web on`), navigate to the device's IP address in your browser. You will be prompted for credentials:
+- **Username:** `admin`
+- **Password:** *Your OTA Password* (defaults to `admin` if never set via `set_ota_pwd`)
+
 ## Notes on Behavior
 - WiFi startup is non-blocking: the firmware will attempt to connect in the background so other services (CLI, OTA, web UI) remain available.
 - If the HX711 sensor is not detected at boot the device will continue in a degraded mode (no hard halt) so you can still access OTA and CLI for troubleshooting.
