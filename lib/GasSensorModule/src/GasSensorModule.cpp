@@ -70,6 +70,11 @@ int GasSensorModule::getLeakThreshold() {
 }
 
 int GasSensorModule::convertToPPM(int rawVal) {
-    // Simple linear approximation for MQ-6: maps 0-1023 ADC to 0-10000 ppm
-    return (int)((rawVal / 1023.0) * 10000);
+    // The sensor outputs 0-5V.
+    // The 2.2k + 2.2k voltage divider halves this to 0-2.5V at the A0 pin.
+    // NodeMCU ADC (0-1023) maps to 0-3.3V.
+    // So 2.5V on the A0 pin corresponds to an ADC value of (2.5 / 3.3) * 1023 = 775.
+    // Simple linear approximation: maps 0-775 ADC to 0-10000 ppm
+    int ppm = (int)((rawVal / 775.0) * 10000);
+    return (ppm > 10000) ? 10000 : ppm; // Cap at 10000 ppm
 }
