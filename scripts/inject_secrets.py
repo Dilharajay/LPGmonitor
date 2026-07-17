@@ -45,4 +45,7 @@ env.Append(CPPDEFINES=[("telegramChatId", f'\\"{telegram_chat_id}\\"')])
 
 ota_password = get_secret("OTA_PASSWORD") or "admin"
 
-env.Append(UPLOAD_FLAGS=[f"--auth={ota_password}"])
+# Only add auth flag if using OTA upload
+upload_protocol = env.GetProjectOption("upload_protocol", default="esptool")
+if upload_protocol == "espota":
+    env.Append(UPLOAD_FLAGS=[f"--auth={ota_password}"])
