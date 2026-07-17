@@ -14,6 +14,7 @@
 #include "LEDModule.h"
 #include "TelegramModule.h"
 #include "WifiWorker/WifiWorker.h"
+#include "DisplayModule.h"
 
 // Global Modules 
 TerminalCLI cli;
@@ -30,6 +31,7 @@ WiFiWorker wifiWorker;
 WebInterfaceModule webModule(scaleDriver, gasSensor, timeModule);
 MqttModule mqttModule(scaleDriver, gasSensor, timeModule);
 LEDModule ledModule;
+DisplayModule displayModule(scaleModule, gasSensor);
 bool wifiLogged = false;
 
 void setup()
@@ -77,8 +79,9 @@ void setup()
     
     // 7. Initialize and Register Feature Modules
     scaleModule.begin(cli, settingsModule);
-    timeModule.begin(cli, settingsModule);
+    timeModule.begin(cli, settingsModule); // Initializes I2C
     mqttModule.begin(settingsModule);
+    displayModule.begin();
 
     // 9. Start CLI (prints welcome prompt and help)
     cli.begin("\n=== Smart LPG Monitor Ready ===");
@@ -118,6 +121,7 @@ void loop()
     timeModule.update();
     mqttModule.update();
     telegramModule.update();
+    displayModule.update();
 
     // Update LED status based on WiFi and streaming state
     static bool lastStreamingState = false;
