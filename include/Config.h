@@ -24,8 +24,8 @@ namespace Config {
     // OTA password is stored in runtime settings (SettingsModule) to avoid
     // hardcoding secrets in source. Configure via the CLI `set_ota_pwd`.
     // ── Hardware Pins ──
-    constexpr uint8_t HX711_DOUT_PIN = D6; // Moved to D6
-    constexpr uint8_t HX711_SCK_PIN  = D7; // Moved to D7
+    constexpr uint8_t HX711_DOUT_PIN = D5; // Moved back to D5
+    constexpr uint8_t HX711_SCK_PIN  = D6; // Moved back to D6
     
     // I2C Pins for DS1307 RTC and OLED
     constexpr uint8_t I2C_SDA_PIN = D2; // SDA on D2
