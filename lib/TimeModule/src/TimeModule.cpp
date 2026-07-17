@@ -7,8 +7,7 @@ TimeModule::TimeModule() : settings(nullptr), rtcFound(false) {}
 
 void TimeModule::begin(TerminalCLI& cli, SettingsModule& s) {
     settings = &s;
-    // Initialize I2C with the configured pins
-    Wire.begin(Config::I2C_SDA_PIN, Config::I2C_SCL_PIN);
+    // I2C is now initialized globally in main.cpp
     
     // Initialize DS1307
     if (!rtc.begin()) {

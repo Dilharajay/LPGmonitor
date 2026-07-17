@@ -18,6 +18,10 @@ public:
     
     void begin();
     void update();
+    
+    // Boot and OTA screens
+    void showBootScreen(const String& task, int progress = -1);
+    void showOtaScreen(int progress);
 
 private:
     ScaleDriver& scaleDriver;
@@ -26,6 +30,9 @@ private:
     Adafruit_SSD1306 display;
     
     unsigned long lastUpdateMs;
+    bool inOtaMode = false;
+    unsigned long lastCpuMeasureMs;
+    unsigned long lastCpuIdleCycles;
 };
 
 #endif

@@ -34,24 +34,37 @@ LEDModule ledModule;
 DisplayModule displayModule(scaleDriver, gasSensor, settingsModule);
 bool wifiLogged = false;
 
+uint32_t currentLoopTimeMs = 0;
+
 void setup()
 {
     Serial.begin(Config::SERIAL_BAUD_RATE);
     
-    // 1. Initialize Logger
+    // 1. Initialize Logger and I2C Early
     Logger::begin(false); // Debug OFF by default
+    Wire.begin(Config::I2C_SDA_PIN, Config::I2C_SCL_PIN);
+    displayModule.begin();
     
     // 2. Initialize Config and EEPROM (do this before hardware so we can read settings)
     settingsModule.begin(cli);
 
     // 3. Initialize LED Module first so it can show connecting status
+    displayModule.showBootScreen("LED Init", 10);
     Logger::info(F("Initializing LED Module..."));
     ledModule.begin(Config::LED_PIN);
 
     // 4. Start WiFi (non-blocking)
+    displayModule.showBootScreen("WiFi Init", 20);
     wifiWorker.begin(settingsModule.getSSID(), settingsModule.getPassword());
     Logger::info(F("Attempting WiFi connection..."));
-    if (wifiWorker.connect(15000, []() { ledModule.update(); })) {
+    if (wifiWorker.connect(15000, []() { 
+        ledModule.update(); 
+        static int p = 20; 
+        if (p < 90) p++;
+        displayModule.showBootScreen("Connecting WiFi...", p);
+        delay(100);
+    })) {
+        displayModule.showBootScreen("WiFi Connected", 100);
         Logger::info(F("WiFi connected successfully. IP Address: "));
         Logger::info(WiFi.localIP().toString().c_str());
 
@@ -78,10 +91,10 @@ void setup()
     });
     
     // 7. Initialize and Register Feature Modules
+    displayModule.showBootScreen("Modules Init", 100);
     scaleModule.begin(cli, settingsModule);
     timeModule.begin(cli, settingsModule); // Initializes I2C
     mqttModule.begin(settingsModule);
-    displayModule.begin();
 
     // 9. Start CLI (prints welcome prompt and help)
     cli.begin("\n=== Smart LPG Monitor Ready ===");
@@ -112,6 +125,8 @@ uint32_t lastWebUpdateMs = 0;
 
 void loop()
 {
+    uint32_t loopStart = millis();
+    
     // Process serial input for commands
     cli.handle();
     
@@ -140,9 +155,11 @@ void loop()
         }
     }
 
-     // Handle OTA updates
+    // Handle OTA updates
     OTA::loop();
 
     // Yield to ESP8266 background tasks
     yield();
+    
+    currentLoopTimeMs = millis() - loopStart;
 }

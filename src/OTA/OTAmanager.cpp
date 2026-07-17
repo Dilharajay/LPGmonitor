@@ -1,6 +1,9 @@
 #include "OTAManager.h"
 #include "Logger.h"
 #include <ArduinoOTA.h>
+#include "DisplayModule.h"
+
+extern DisplayModule displayModule;
 
 namespace OTA
 {
@@ -37,6 +40,7 @@ void begin(const char* hostname,
             snprintf(buf, sizeof(buf), "OTA: %u%%", percent);
             Logger::info(buf);
         }
+        displayModule.showOtaScreen(percent);
     });
 
     ArduinoOTA.onError([](ota_error_t error)

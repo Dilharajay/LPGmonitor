@@ -2,8 +2,10 @@
 #include "Logger.h"
 #include <ESP8266WiFi.h>
 
+extern uint32_t currentLoopTimeMs;
+
 DisplayModule::DisplayModule(ScaleDriver& scale, GasSensorModule& gas, SettingsModule& settings)
-    : scaleDriver(scale), gasSensor(gas), settingsModule(settings), display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET), lastUpdateMs(0) {
+    : scaleDriver(scale), gasSensor(gas), settingsModule(settings), display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET), lastUpdateMs(0), inOtaMode(false) {
 }
 
 void DisplayModule::begin() {
@@ -14,16 +16,56 @@ void DisplayModule::begin() {
     }
     
     Logger::info(F("OLED Display Initialized"));
+    showBootScreen("BIOS INIT", 0);
+}
+
+void DisplayModule::showBootScreen(const String& task, int progress) {
     display.clearDisplay();
     display.setTextSize(1);
     display.setTextColor(SSD1306_WHITE);
+    
+    // Header
     display.setCursor(0, 0);
-    display.println(F("Smart LPG Monitor"));
-    display.println(F("Starting up..."));
+    display.println(F("== LPG BIOS v1.0 =="));
+    
+    // Task
+    display.setCursor(0, 20);
+    display.print(F("> "));
+    display.println(task);
+    
+    // Progress Bar
+    if (progress >= 0 && progress <= 100) {
+        display.drawRect(0, 40, 128, 10, SSD1306_WHITE);
+        display.fillRect(2, 42, (124 * progress) / 100, 6, SSD1306_WHITE);
+    }
+    
+    display.display();
+}
+
+void DisplayModule::showOtaScreen(int progress) {
+    inOtaMode = true;
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    
+    display.setCursor(0, 0);
+    display.println(F("SYSTEM UPDATE"));
+    display.drawLine(0, 10, 128, 10, SSD1306_WHITE);
+    
+    display.setCursor(0, 20);
+    display.print(F("Flashing OTA... "));
+    display.print(progress);
+    display.println(F("%"));
+    
+    display.drawRect(0, 40, 128, 10, SSD1306_WHITE);
+    display.fillRect(2, 42, (124 * progress) / 100, 6, SSD1306_WHITE);
+    
     display.display();
 }
 
 void DisplayModule::update() {
+    if (inOtaMode) return; // Halt UI updates during OTA
+    
     unsigned long now = millis();
     // Update screen every 500ms
     if (now - lastUpdateMs < 500) return;
@@ -79,11 +121,21 @@ void DisplayModule::update() {
     display.print(weight, 2);
     display.print(F(" kg"));
     
-    // 4. Gas Sensor PPM
+    // 4. Sensor & System Stats
     display.setCursor(0, 45);
     display.print(F("Sensor: "));
     display.print(gasSensor.getPPM());
     display.print(F(" ppm"));
+    
+    display.setCursor(0, 55);
+    uint32_t freeRam = ESP.getFreeHeap() / 1024;
+    display.print(F("RAM:"));
+    display.print(freeRam);
+    display.print(F("KB "));
+    
+    display.print(F(" CPU:"));
+    display.print(currentLoopTimeMs); // We'll show loop time as a proxy for CPU load
+    display.print(F("ms"));
     
     display.display();
 }
