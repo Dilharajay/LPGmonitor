@@ -2,8 +2,8 @@
 #include "Logger.h"
 #include <ESP8266WiFi.h>
 
-DisplayModule::DisplayModule(ScaleModule& scale, GasSensorModule& gas)
-    : scaleModule(scale), gasSensor(gas), display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET), lastUpdateMs(0) {
+DisplayModule::DisplayModule(ScaleDriver& scale, GasSensorModule& gas, SettingsModule& settings)
+    : scaleDriver(scale), gasSensor(gas), settingsModule(settings), display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET), lastUpdateMs(0) {
 }
 
 void DisplayModule::begin() {
@@ -51,18 +51,32 @@ void DisplayModule::update() {
     // Draw a line separator
     display.drawLine(0, 10, 128, 10, SSD1306_WHITE);
     
+    // Calculate Gas %
+    float weight = scaleDriver.getFilteredWeight();
+    float emptyWeight = settingsModule.getEmptyCylinderWeight();
+    float fullWeight = settingsModule.getFullCylinderWeight();
+    float gasCapacity = fullWeight - emptyWeight;
+    
+    float gasPercent = 0.0f;
+    if (gasCapacity > 0.0f) {
+        float gasRemaining = weight - emptyWeight;
+        gasPercent = (gasRemaining / gasCapacity) * 100.0f;
+        if (gasPercent < 0.0f) gasPercent = 0.0f;
+        if (gasPercent > 100.0f) gasPercent = 100.0f;
+    }
+    
     // 2. Gas Level (Big Text)
     display.setTextSize(2);
     display.setCursor(0, 15);
     display.print(F("Gas: "));
-    display.print((int)scaleModule.getGasPercentage());
+    display.print((int)gasPercent);
     display.print(F("%"));
     
     // 3. Weight Details
     display.setTextSize(1);
     display.setCursor(0, 35);
     display.print(F("Weight: "));
-    display.print(scaleModule.getWeightKg(), 2);
+    display.print(weight, 2);
     display.print(F(" kg"));
     
     // 4. Gas Sensor PPM

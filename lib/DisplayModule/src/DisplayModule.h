@@ -4,8 +4,9 @@
 #include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include "ScaleModule.h"
+#include "ScaleDriver.h"
 #include "GasSensorModule.h"
+#include "SettingsModule.h"
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
@@ -13,14 +14,15 @@
 
 class DisplayModule {
 public:
-    DisplayModule(ScaleModule& scale, GasSensorModule& gas);
+    DisplayModule(ScaleDriver& scale, GasSensorModule& gas, SettingsModule& settings);
     
     void begin();
     void update();
 
 private:
-    ScaleModule& scaleModule;
+    ScaleDriver& scaleDriver;
     GasSensorModule& gasSensor;
+    SettingsModule& settingsModule;
     Adafruit_SSD1306 display;
     
     unsigned long lastUpdateMs;

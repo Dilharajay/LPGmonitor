@@ -31,7 +31,7 @@ WiFiWorker wifiWorker;
 WebInterfaceModule webModule(scaleDriver, gasSensor, timeModule);
 MqttModule mqttModule(scaleDriver, gasSensor, timeModule);
 LEDModule ledModule;
-DisplayModule displayModule(scaleModule, gasSensor);
+DisplayModule displayModule(scaleDriver, gasSensor, settingsModule);
 bool wifiLogged = false;
 
 void setup()
