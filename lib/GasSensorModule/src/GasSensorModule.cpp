@@ -57,7 +57,12 @@ int GasSensorModule::getPPM() {
     return ppmValue;
 }
 
+bool GasSensorModule::isWarmingUp() const {
+    return millis() < 600000; // 10 minutes warmup
+}
+
 bool GasSensorModule::isLeakDetected() {
+    if (isWarmingUp()) return false;
     return ppmValue >= leakThreshold;
 }
 

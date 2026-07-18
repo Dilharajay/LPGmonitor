@@ -243,11 +243,13 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
     <div class="sp-section">
       <h3>&#x2696; Scale</h3>
       <div class="field"><label>Tare Offset</label><input type="number" id="cfgTare"></div>
+      <div class="field" style="margin-top:14px"><label>Calibration Known Weight (g)</label><input type="number" id="cfgCalWeight" placeholder="500"></div>
     </div>
   </div>
   <div class="sp-footer">
     <button class="btn btn-primary" onclick="saveConfig()">Save Configuration</button>
     <button class="btn btn-tare" onclick="tareScale()">Tare Scale (Zero)</button>
+    <button class="btn btn-primary" style="margin-top:8px;background:var(--orange)" onclick="calibrateScale()">Calibrate Scale</button>
   </div>
 </div>
 
@@ -304,16 +306,24 @@ function fetchStatus(){
     // MQ-6
     var ppm=d.gas_ppm||0;
     var threshold=d.gas_threshold||700;
+    var isWarmingUp=d.gas_warmup||false;
     var pe=document.getElementById('ppmVal');
-    pe.innerHTML=ppm+' <span style="font-size:18px;font-weight:400">ppm</span>';
-    pe.className='ppm-val '+(ppm>=threshold?'danger':ppm>=threshold*0.7?'warning':'normal');
-
-    // Status badge
     var sb=document.getElementById('statusBadge');
     var st=document.getElementById('statusText');
-    if(ppm>=threshold){sb.className='status-badge alert';st.innerText='GAS LEAK!';}
-    else if(pct<10){sb.className='status-badge warn';st.innerText='Low Gas';}
-    else{sb.className='status-badge ok';st.innerText='Normal';}
+    
+    if (isWarmingUp) {
+      pe.innerHTML=ppm+' <span style="font-size:18px;font-weight:400">ppm</span>';
+      pe.className='ppm-val warning';
+      sb.className='status-badge warn';
+      var mins = Math.ceil((600000 - (d.uptime_ms||0))/60000);
+      st.innerText='Warming Up (' + mins + 'm)';
+    } else {
+      pe.innerHTML=ppm+' <span style="font-size:18px;font-weight:400">ppm</span>';
+      pe.className='ppm-val '+(ppm>=threshold?'danger':ppm>=threshold*0.7?'warning':'normal');
+      if(ppm>=threshold){sb.className='status-badge alert';st.innerText='GAS LEAK!';}
+      else if(pct<10){sb.className='status-badge warn';st.innerText='Low Gas';}
+      else{sb.className='status-badge ok';st.innerText='Normal';}
+    }
 
     // Info row
     document.getElementById('rssiVal').innerText=(d.rssi||0)+' dBm';
@@ -369,6 +379,15 @@ function saveConfig(){
 function tareScale(){
   fetch('/api/config',{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'tare'})})
   .then(function(){cfgLoaded=false;alert('Scale tared!');})
+  .catch(function(e){alert('Error: '+e)});
+}
+
+// ── Calibrate ──
+function calibrateScale(){
+  var w = parseFloat(document.getElementById('cfgCalWeight').value);
+  if(!w || w<=0) { alert('Please enter a valid known weight for calibration!'); return; }
+  fetch('/api/config',{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'calibrate', cal_weight: w})})
+  .then(function(){alert('Scale calibrated!');toggleSettings();})
   .catch(function(e){alert('Error: '+e)});
 }
 
@@ -434,6 +453,7 @@ void WebInterfaceModule::handleStatus() {
     doc["gas_raw"] = gasSensor.getRawValue();
     doc["gas_threshold"] = settings->getGasLeakThreshold();
     doc["gas_leak"] = gasSensor.isLeakDetected();
+    doc["gas_warmup"] = gasSensor.isWarmingUp();
     doc["rssi"] = WiFi.RSSI();
     doc["uptime_ms"] = millis() - bootTimeMs;
     doc["free_heap"] = ESP.getFreeHeap();
@@ -471,6 +491,19 @@ void WebInterfaceModule::handleConfig() {
         scale.performTare();
         settings->setTareOffset(scale.getTareOffset());
         server.send(200, "application/json", "{\"status\":\"success\"}");
+        return;
+    }
+
+    // Calibrate action
+    if (doc["action"].is<const char*>() && String(doc["action"].as<const char*>()) == "calibrate") {
+        float knownWeight = doc["cal_weight"].as<float>();
+        if (knownWeight > 0) {
+            scale.performCalibration(knownWeight);
+            settings->setCalibrationFactor(scale.getCalibrationFactor());
+            server.send(200, "application/json", "{\"status\":\"success\"}");
+        } else {
+            server.send(400, "application/json", "{\"error\":\"Invalid weight\"}");
+        }
         return;
     }
 

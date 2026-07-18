@@ -84,10 +84,12 @@ void DisplayModule::update() {
     }
     
     display.setCursor(80, 0);
-    if (gasSensor.isLeakDetected()) {
+    if (gasSensor.isWarmingUp()) {
+        display.print(F("WARMUP"));
+    } else if (gasSensor.isLeakDetected()) {
         display.print(F("!LEAK!"));
     } else {
-        display.print(F("SAFE"));
+        display.print(F("SAFE  "));
     }
     
     // Draw a line separator

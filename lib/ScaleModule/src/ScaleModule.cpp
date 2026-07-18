@@ -29,6 +29,10 @@ void ScaleModule::handleTare(String args) {
 void ScaleModule::handleCalibrate(String args) {
     float knownWeight = args.toFloat();
     scaleDriver.performCalibration(knownWeight);
+    if (settings) {
+        settings->setCalibrationFactor(scaleDriver.getCalibrationFactor());
+        Logger::info("New calibration factor saved to EEPROM.");
+    }
 }
 
 void ScaleModule::handleStream(String args) {

@@ -1,8 +1,9 @@
 #include "SettingsModule.h"
 #include "Logger.h"
+#include "Config.h"
 
 #define EEPROM_SIZE 1024
-#define MAGIC_WORD "CFG3"
+#define MAGIC_WORD "CFG4"
 
 static_assert(sizeof(SystemSettings) <= EEPROM_SIZE, "SystemSettings exceeds EEPROM allocation!");
 
@@ -104,6 +105,8 @@ void SettingsModule::resetToDefaults() {
     settings.mqttPassword[sizeof(settings.mqttPassword) - 1] = '\0';
     strncpy(settings.otaPassword, "", sizeof(settings.otaPassword) - 1);
     settings.otaPassword[sizeof(settings.otaPassword) - 1] = '\0';
+    
+    settings.calibrationFactor = Config::DEFAULT_CALIBRATION_FACTOR;
     
     save();
 }
@@ -233,6 +236,11 @@ void SettingsModule::setMqttPassword(const char* pwd) {
 void SettingsModule::setOtaPassword(const char* pwd) {
     strncpy(settings.otaPassword, pwd, sizeof(settings.otaPassword) - 1);
     settings.otaPassword[sizeof(settings.otaPassword) - 1] = '\0';
+    save();
+}
+
+void SettingsModule::setCalibrationFactor(float factor) {
+    settings.calibrationFactor = factor;
     save();
 }
 

@@ -23,8 +23,8 @@ struct SystemSettings {
     char mqttBroker[65];
     int mqttPort;
     char mqttUser[33];
-    char mqttPassword[65];
     char otaPassword[65];
+    float calibrationFactor;     // Scale calibration factor
 };
 
 class SettingsModule {
@@ -50,6 +50,7 @@ public:
     const char* getMqttUser() const { return settings.mqttUser; }
     const char* getMqttPassword() const { return settings.mqttPassword; }
     const char* getOtaPassword() const { return settings.otaPassword; }
+    float getCalibrationFactor() const { return settings.calibrationFactor; }
     
     void setTelemetryEnabled(bool enabled);
     void setTareOffset(long offset);
@@ -69,6 +70,7 @@ public:
     void setMqttUser(const char* user);
     void setMqttPassword(const char* pwd);
     void setOtaPassword(const char* pwd);
+    void setCalibrationFactor(float factor);
 
 private:
     SystemSettings settings;

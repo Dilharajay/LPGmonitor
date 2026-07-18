@@ -13,6 +13,7 @@ public:
     int getRawValue();       // Raw ADC 0-1023
     int getPPM();            // Approximate PPM value
     bool isLeakDetected();   // True if above threshold
+    bool isWarmingUp() const; // True if sensor is within 10m warmup period
     
     void setLeakThreshold(int ppm);
     int getLeakThreshold();
