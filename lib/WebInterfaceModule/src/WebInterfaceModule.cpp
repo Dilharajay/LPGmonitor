@@ -224,8 +224,21 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
     </div>
     <div class="sp-section">
       <h3>&#x1F310; Network &amp; Time</h3>
+      <div class="field"><label>WiFi SSID</label><input type="text" id="cfgSsid"></div>
+      <div class="field"><label>WiFi Password (leave blank to keep)</label><input type="password" id="cfgWifiPwd"></div>
       <div class="field"><label>NTP Server</label><input type="text" id="cfgNtp"></div>
       <div class="field"><label>Timezone Offset (hours from UTC)</label><input type="number" step="0.5" id="cfgTz"></div>
+    </div>
+    <div class="sp-section">
+      <h3>&#x1F4E1; MQTT Settings</h3>
+      <div class="field"><label>MQTT Broker</label><input type="text" id="cfgMqttBroker"></div>
+      <div class="field"><label>MQTT Port</label><input type="number" id="cfgMqttPort"></div>
+      <div class="field"><label>MQTT Username</label><input type="text" id="cfgMqttUser"></div>
+      <div class="field"><label>MQTT Password (leave blank to keep)</label><input type="password" id="cfgMqttPwd"></div>
+    </div>
+    <div class="sp-section">
+      <h3>&#x1F512; Security</h3>
+      <div class="field"><label>OTA Password (leave blank to keep)</label><input type="password" id="cfgOtaPwd"></div>
     </div>
     <div class="sp-section">
       <h3>&#x2696; Scale</h3>
@@ -320,6 +333,10 @@ function fetchStatus(){
       document.getElementById('cfgNtp').value=d.ntp_server||'';
       document.getElementById('cfgTz').value=((d.tz_offset||0)/3600).toFixed(1);
       document.getElementById('cfgTare').value=d.tare_offset||0;
+      document.getElementById('cfgSsid').value=d.ssid||'';
+      document.getElementById('cfgMqttBroker').value=d.mqtt_broker||'';
+      document.getElementById('cfgMqttPort').value=d.mqtt_port||1883;
+      document.getElementById('cfgMqttUser').value=d.mqtt_user||'';
       cfgLoaded=true;
     }
   }).catch(function(e){console.error(e)});
@@ -328,12 +345,19 @@ function fetchStatus(){
 // ── Save config ──
 function saveConfig(){
   var data={
+    ssid:document.getElementById('cfgSsid').value,
+    wifi_pwd:document.getElementById('cfgWifiPwd').value,
     ntp_server:document.getElementById('cfgNtp').value,
     tz_offset:Math.round(parseFloat(document.getElementById('cfgTz').value)*3600),
     tare_offset:parseInt(document.getElementById('cfgTare').value),
     full_cyl_weight:parseFloat(document.getElementById('cfgFullWeight').value),
     empty_cyl_weight:parseFloat(document.getElementById('cfgEmptyWeight').value),
-    gas_threshold:parseInt(document.getElementById('cfgGasThreshold').value)
+    gas_threshold:parseInt(document.getElementById('cfgGasThreshold').value),
+    mqtt_broker:document.getElementById('cfgMqttBroker').value,
+    mqtt_port:parseInt(document.getElementById('cfgMqttPort').value),
+    mqtt_user:document.getElementById('cfgMqttUser').value,
+    mqtt_pwd:document.getElementById('cfgMqttPwd').value,
+    ota_pwd:document.getElementById('cfgOtaPwd').value
   };
   fetch('/api/config',{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)})
   .then(function(r){return r.json()})
@@ -397,8 +421,12 @@ void WebInterfaceModule::handleStatus() {
     JsonDocument doc;
     doc["weight"] = scale.getFilteredWeight();
     doc["time"] = timeModule.getTimeString();
+    doc["ssid"] = settings->getSSID();
     doc["ntp_server"] = settings->getNtpServer();
     doc["tz_offset"] = settings->getTimezoneOffsetSec();
+    doc["mqtt_broker"] = settings->getMqttBroker();
+    doc["mqtt_port"] = settings->getMqttPort();
+    doc["mqtt_user"] = settings->getMqttUser();
     doc["tare_offset"] = settings->getTareOffset();
     doc["full_cyl_weight"] = settings->getFullCylinderWeight();
     doc["empty_cyl_weight"] = settings->getEmptyCylinderWeight();
@@ -470,6 +498,38 @@ void WebInterfaceModule::handleConfig() {
         if (val > 0) {
             settings->setGasLeakThreshold(val);
             gasSensor.setLeakThreshold(val);
+        }
+    }
+    
+    // New Settings
+    if (doc["ssid"].is<const char*>()) {
+        settings->handleSetSSID(doc["ssid"].as<const char*>());
+    }
+    if (doc["wifi_pwd"].is<const char*>()) {
+        String pwd = doc["wifi_pwd"].as<const char*>();
+        if (pwd.length() > 0) {
+            settings->handleSetPassword(pwd);
+        }
+    }
+    if (doc["mqtt_broker"].is<const char*>()) {
+        settings->setMqttBroker(doc["mqtt_broker"].as<const char*>());
+    }
+    if (doc["mqtt_port"].is<int>()) {
+        settings->setMqttPort(doc["mqtt_port"].as<int>());
+    }
+    if (doc["mqtt_user"].is<const char*>()) {
+        settings->setMqttUser(doc["mqtt_user"].as<const char*>());
+    }
+    if (doc["mqtt_pwd"].is<const char*>()) {
+        String pwd = doc["mqtt_pwd"].as<const char*>();
+        if (pwd.length() > 0) {
+            settings->setMqttPassword(pwd.c_str());
+        }
+    }
+    if (doc["ota_pwd"].is<const char*>()) {
+        String pwd = doc["ota_pwd"].as<const char*>();
+        if (pwd.length() > 0) {
+            settings->setOtaPassword(pwd.c_str());
         }
     }
 
