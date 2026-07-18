@@ -524,7 +524,7 @@ void WebInterfaceModule::handleConfig() {
     }
     if (doc["empty_cyl_weight"].is<float>()) {
         float val = doc["empty_cyl_weight"].as<float>();
-        if (val > 0) settings->setEmptyCylinderWeight(val);
+        if (val >= 0) settings->setEmptyCylinderWeight(val);
     }
     if (doc["gas_threshold"].is<int>()) {
         int val = doc["gas_threshold"].as<int>();
