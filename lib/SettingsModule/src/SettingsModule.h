@@ -23,6 +23,7 @@ struct SystemSettings {
     char mqttBroker[65];
     int mqttPort;
     char mqttUser[33];
+    char mqttPassword[65];
     char otaPassword[65];
     float calibrationFactor;     // Scale calibration factor
 };

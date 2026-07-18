@@ -148,11 +148,7 @@ void loop()
     ledModule.update();
     
     if (settingsModule.isWebInterfaceEnabled()) {
-        uint32_t now = millis();
-        if (now - lastWebUpdateMs >= Config::WEB_UPDATE_INTERVAL_MS) {
-            webModule.update();
-            lastWebUpdateMs = now;
-        }
+        webModule.update();
     }
 
     // Handle OTA updates
