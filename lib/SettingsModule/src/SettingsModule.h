@@ -58,6 +58,8 @@ public:
     void setTimezoneOffsetSec(long sec);
     void setNtpServer(const char* ntp);
     void setServerUrl(const char* url);
+    void setSSID(const char* ssid);
+    void setPassword(const char* pwd);
     void setFullCylinderWeight(float w);
     void setEmptyCylinderWeight(float w);
     void setGasLeakThreshold(int ppm);

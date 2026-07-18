@@ -503,12 +503,12 @@ void WebInterfaceModule::handleConfig() {
     
     // New Settings
     if (doc["ssid"].is<const char*>()) {
-        settings->handleSetSSID(doc["ssid"].as<const char*>());
+        settings->setSSID(doc["ssid"].as<const char*>());
     }
     if (doc["wifi_pwd"].is<const char*>()) {
         String pwd = doc["wifi_pwd"].as<const char*>();
         if (pwd.length() > 0) {
-            settings->handleSetPassword(pwd);
+            settings->setPassword(pwd.c_str());
         }
     }
     if (doc["mqtt_broker"].is<const char*>()) {

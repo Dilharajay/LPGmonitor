@@ -175,6 +175,18 @@ void SettingsModule::setServerUrl(const char* url) {
     save();
 }
 
+void SettingsModule::setSSID(const char* ssid) {
+    strncpy(settings.ssid, ssid, sizeof(settings.ssid) - 1);
+    settings.ssid[sizeof(settings.ssid) - 1] = '\0';
+    save();
+}
+
+void SettingsModule::setPassword(const char* pwd) {
+    strncpy(settings.password, pwd, sizeof(settings.password) - 1);
+    settings.password[sizeof(settings.password) - 1] = '\0';
+    save();
+}
+
 void SettingsModule::setFullCylinderWeight(float w) {
     settings.fullCylinderWeight = w;
     save();
