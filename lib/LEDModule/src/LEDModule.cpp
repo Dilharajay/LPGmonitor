@@ -33,10 +33,10 @@ void LEDModule::update() {
             break;
             
         case LEDMode::CONNECTED:
-            // Stay on for 5 seconds, then turn off
+            // Stay on for 5 seconds, then transition to heartbeat
             if (now - connectedAtMs >= CONNECTED_DURATION) {
-                setMode(LEDMode::OFF);
-                Logger::info(F("WiFi connected indication complete"));
+                setMode(LEDMode::HEARTBEAT);
+                Logger::info(F("WiFi connected indication complete, switching to heartbeat"));
             } else {
                 setLED(true);
             }
@@ -47,6 +47,16 @@ void LEDModule::update() {
             if (now - lastToggleMs >= BLINK_STREAMING_INTERVAL) {
                 toggleLED();
                 lastToggleMs = now;
+            }
+            break;
+            
+        case LEDMode::HEARTBEAT:
+            // Blink very briefly (50ms) every 2 seconds
+            if (now - lastToggleMs >= 2000) {
+                setLED(true);
+                lastToggleMs = now;
+            } else if (now - lastToggleMs >= 50) {
+                setLED(false);
             }
             break;
             
@@ -111,7 +121,7 @@ void LEDModule::setStreaming(bool streaming) {
         Logger::info(F("Data streaming - LED blinking fast"));
     } else {
         if (WiFi.status() == WL_CONNECTED) {
-            setMode(LEDMode::OFF);  // Return to normal when streaming stops
+            setMode(LEDMode::HEARTBEAT);  // Return to heartbeat when streaming stops
         }
     }
 }

@@ -9,6 +9,7 @@ enum class LEDMode {
     CONNECTING,      // Blink slow (WiFi connecting)
     CONNECTED,       // Solid on for 5 seconds (WiFi connected)
     STREAMING,       // Blink fast (data streaming)
+    HEARTBEAT,       // Short flash every 2 seconds (normal operation)
     ERROR            // Blink very fast (error state)
 };
 
