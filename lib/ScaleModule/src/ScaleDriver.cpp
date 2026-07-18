@@ -149,10 +149,9 @@ void ScaleDriver::update() {
 
     float raw = scale.get_units(1);
 
-    // ── Stage 0: reject negative readings ──────────────────────────
+    // ── Stage 0: clamp negative readings to zero ───────────────────
     if (raw < 0.0f) {
-        Logger::debug(F("Negative reading rejected"));
-        return;            // don't feed garbage into the filters
+        raw = 0.0f;
     }
 
     // ── Stage 1: Median filter ─────────────────────────────────────

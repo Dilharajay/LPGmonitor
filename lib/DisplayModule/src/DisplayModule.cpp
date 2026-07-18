@@ -119,7 +119,7 @@ void DisplayModule::update() {
     display.setCursor(0, 35);
     display.print(F("Weight: "));
     display.print(weight, 2);
-    display.print(F(" kg"));
+    display.print(F(" g"));
     
     // 4. Sensor & System Stats
     display.setCursor(0, 45);
