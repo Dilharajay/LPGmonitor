@@ -407,9 +407,13 @@ void WebInterfaceModule::begin(SettingsModule& s, TerminalCLI& cli) {
     settings = &s;
     bootTimeMs = millis();
 
-    if (WiFi.status() == WL_CONNECTED) {
+    if (WiFi.status() == WL_CONNECTED || WiFi.getMode() == WIFI_AP || WiFi.getMode() == WIFI_AP_STA) {
         Logger::info(F("Web Interface Server IP: "));
-        Logger::info(WiFi.localIP().toString().c_str());
+        if (WiFi.status() == WL_CONNECTED) {
+            Logger::info(WiFi.localIP().toString().c_str());
+        } else {
+            Logger::info(WiFi.softAPIP().toString().c_str());
+        }
 
         server.on("/", HTTP_GET, [this]() { this->handleRoot(); });
         server.on("/api/status", HTTP_GET, [this]() { this->handleStatus(); });
@@ -418,7 +422,7 @@ void WebInterfaceModule::begin(SettingsModule& s, TerminalCLI& cli) {
         server.begin();
         Logger::info(F("HTTP server started"));
     } else {
-        Logger::error(F("WebInterface: WiFi not connected, server not started."));
+        Logger::error(F("WebInterface: WiFi not active, server not started."));
     }
 }
 

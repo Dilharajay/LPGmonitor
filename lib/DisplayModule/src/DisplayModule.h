@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include "qrcode.h"
 #include "ScaleDriver.h"
 #include "GasSensorModule.h"
 #include "SettingsModule.h"

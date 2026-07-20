@@ -34,6 +34,7 @@ bool WiFiWorker::connect(uint32_t timeoutMs, void (*tickCb)())
         if (millis() - start > timeoutMs)
         {
             Logger::error("WiFi connect timeout");
+            startAP();
             return false;
         }
     }
@@ -47,6 +48,18 @@ bool WiFiWorker::connect(uint32_t timeoutMs, void (*tickCb)())
 bool WiFiWorker::isConnected()
 {
     return WiFi.status() == WL_CONNECTED;
+}
+
+bool WiFiWorker::isAPMode()
+{
+    return WiFi.getMode() == WIFI_AP || WiFi.getMode() == WIFI_AP_STA;
+}
+
+void WiFiWorker::startAP()
+{
+    WiFi.mode(WIFI_AP_STA);
+    WiFi.softAP("SmartLPG", "12345678");
+    Logger::info("Started WiFi AP: SmartLPG / 12345678");
 }
 
 IPAddress WiFiWorker::ip()
@@ -70,7 +83,9 @@ void WiFiWorker::update()
         if (millis() - _lastReconnectAttempt > 5000)
         {
             Logger::error("WiFi lost. Reconnecting...");
-            WiFi.reconnect();
+            if (!isAPMode()) {
+                WiFi.reconnect();
+            }
             _lastReconnectAttempt = millis();
         }
     }

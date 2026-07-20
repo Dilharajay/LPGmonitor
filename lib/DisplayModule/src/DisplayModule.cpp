@@ -72,6 +72,42 @@ void DisplayModule::update() {
     lastUpdateMs = now;
     
     display.clearDisplay();
+
+    // Show QR Code if in AP mode and disconnected
+    if ((WiFi.getMode() == WIFI_AP_STA || WiFi.getMode() == WIFI_AP) && WiFi.status() != WL_CONNECTED) {
+        QRCode qrcode;
+        uint8_t qrcodeData[qrcode_getBufferSize(3)];
+        qrcode_initText(&qrcode, qrcodeData, 3, 0, "WIFI:S:SmartLPG;T:WPA;P:12345678;;");
+
+        int scale = 2; // 29 * 2 = 58 px
+        int xOffset = 2;
+        int yOffset = 3; // Center vertically in 64px
+
+        for (uint8_t y = 0; y < qrcode.size; y++) {
+            for (uint8_t x = 0; x < qrcode.size; x++) {
+                if (qrcode_getModule(&qrcode, x, y)) {
+                    display.fillRect(xOffset + x * scale, yOffset + y * scale, scale, scale, SSD1306_WHITE);
+                }
+            }
+        }
+        
+        display.setTextColor(SSD1306_WHITE);
+        display.setTextSize(1);
+        display.setCursor(64, 5);
+        display.print(F("Connect to"));
+        display.setCursor(64, 15);
+        display.print(F("SmartLPG"));
+        display.setCursor(64, 30);
+        display.print(F("PW: 12345678"));
+        display.setCursor(64, 45);
+        display.print(F("IP:"));
+        display.setCursor(64, 55);
+        display.print(WiFi.softAPIP().toString());
+        
+        display.display();
+        return;
+    }
+
     display.setTextColor(SSD1306_WHITE);
     
     // 1. Top bar: WiFi and Status

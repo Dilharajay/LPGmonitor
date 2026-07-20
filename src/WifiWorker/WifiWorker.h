@@ -10,6 +10,8 @@ public:
     void begin(const char* ssid, const char* password);
 
     bool isConnected();
+    bool isAPMode();
+    void startAP();
     bool connect(uint32_t timeoutMs = 15000, void (*tickCb)() = nullptr);
 
     void update();   // FIX: allows auto-reconnect
